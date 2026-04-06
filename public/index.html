@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>CryptoLatino - Analizador de Contratos</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #0a1628; color: white; margin: 0; padding: 20px; }
+  h1 { color: #F5A623; text-align: center; }
+  p { text-align: center; color: #aaa; }
+  .container { max-width: 600px; margin: 40px auto; }
+  input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; font-size: 14px; }
+  button { width: 100%; padding: 14px; background: #F5A623; color: black; font-weight: bold; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+  #resultado { margin-top: 20px; padding: 20px; background: #1a2e4a; border-radius: 8px; display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔐 Analizador de Smart Contracts</h1>
+  <p>Verifica cualquier contrato en español — gratis</p>
+  <input id="contrato" type="text" placeholder="Pega la dirección del contrato aquí..."/>
+  <select id="red">
+    <option value="ethereum">Ethereum</option>
+    <option value="arbitrum">Arbitrum</option>
+    <option value="polygon">Polygon</option>
+  </select>
+  <button onclick="analizar()">🔍 Analizar Contrato</button>
+  <div id="resultado"></div>
+</div>
+<script>
+async function analizar() {
+  const contrato = document.getElementById('contrato').value;
+  const red = document.getElementById('red').value;
+  document.getElementById('resultado').style.display = 'block';
+  document.getElementById('resultado').innerHTML = 'Analizando...';
+  const res = await fetch('/analizar', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ contrato, red })
+  });
+  const data = await res.json();
+  document.getElementById('resultado').innerHTML = `
+    <h3>${data.mensaje}</h3>
+    <p>Nombre: ${data.nombre}</p>
+    <p>Compilador: ${data.compilador}</p>
+  `;
+}
+</script>
+</body>
+</html>
