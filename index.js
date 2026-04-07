@@ -29,7 +29,7 @@ app.post('/analizar', async (req, res) => {
         module: 'contract',
         action: 'getsourcecode',
         address: contrato,
-        apikey: '6TTVEGR1VHT8SCRTVBSMH2BB3WJM9QIZZM'
+        apikey: process.env.ETHERSCAN_API_KEY
       }
     });
 
