@@ -9,10 +9,9 @@ app.post('/analizar', async (req, res) => {
 
   if (!contrato || !contrato.match(/^0x[a-fA-F0-9]{40}$/)) {
     return res.json({
-      verificado: false,
+      mensaje: 'Direccion invalida',
       nombre: 'N/A',
       compilador: 'N/A',
-      mensaje: '🚨 Dirección inválida',
       analisis: ''
     });
   }
@@ -27,47 +26,34 @@ app.post('/analizar', async (req, res) => {
     const url = explorers[red] || explorers.ethereum;
     const apikey = process.env.ETHERSCAN_API_KEY || '6TTVEGR1VHT8SCRTVBSMH2BB3WJM9QIZZM';
     const response = await axios.get(url, {
-      params: {
-        module: 'contract',
-        action: 'getsourcecode',
-        address: contrato,
-        apikey: apikey
-      }
+      params: { module: 'contract', action: 'getsourcecode', address: contrato, apikey }
     });
 
     const data = response.data.result[0];
-    const nombre = data.ContractName && data.ContractName !== '' ? data.ContractName : 'Desconocido';
-    const compilador = data.CompilerVersion && data.CompilerVersion !== '' ? data.CompilerVersion : 'N/A';
+    const nombre = data.ContractName || 'Desconocido';
+    const compilador = data.CompilerVersion || 'N/A';
     const verificado = data.SourceCode !== '';
+    const mensaje = verificado ? 'Contrato verificado' : 'Contrato NO verificado';
     let analisis = '';
 
-    if (verificado && data.SourceCode) {
+    if (verificado) {
       const codigo = data.SourceCode.substring(0, 3000);
       const anthropicKey = process.env.ANTHROPIC_API_KEY;
-      const aiResponse = await axios.post('https://api.anthropic.com/v1/messages', {
+      const ai = await axios.post('https://api.anthropic.com/v1/messages', {
         model: 'claude-sonnet-4-6',
         max_tokens: 1024,
-        messages: [{
-          role: 'user',
-          content: `Analiza este smart contract en español:\n1. Qué hace?\n2. Es seguro?\n3. Recomendación final\n\nCódigo:\n${codigo}`
-        }]
+        messages: [{ role: 'user', content: Analiza este smart contract en espanol. Que hace, es seguro, recomendacion:\n${codigo} }]
       }, {
-        headers: {
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json'
-        }
+        headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }
       });
-      analisis = aiResponse.data.content[0].text;
+      analisis = ai.data.content[0].text;
     }
 
-    res.json({ verificado, nombre, compilador, mensaje: verificado ? '✅ Contrato verificado — código fuente visible' : '🚨 Contrato NO verificado', analisis });
+    res.json({ mensaje, nombre, compilador, analisis });
 
   } catch (error) {
-    res.status(500).json({ error: 'Error: ' + error.message });
+    res.status(500).json({ mensaje: 'Error', nombre: 'N/A', compilador: 'N/A', analisis: error.message });
   }
 });
 
-app.listen(3000, () => {
-  console.log('Servidor corriendo en http://localhost:3000');
-});
+app.listen(3000, () => console.log('Servidor corriendo'));
