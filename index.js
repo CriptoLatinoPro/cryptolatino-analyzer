@@ -28,7 +28,7 @@ app.post('/analizar', async (req, res) => {
       const codigo = data.SourceCode.substring(0, 3000);
       const anthropicKey = process.env.ANTHROPIC_API_KEY;
       const ai = await axios.post('https://api.anthropic.com/v1/messages', {
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1024,
         messages: [{ role: 'user', content: 'Analiza este contrato: ' + codigo }]
       }, { headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' } });
