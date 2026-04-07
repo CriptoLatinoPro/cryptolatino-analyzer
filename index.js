@@ -12,7 +12,7 @@ app.post('/analizar', async (req, res) => {
       verificado: false,
       nombre: 'N/A',
       compilador: 'N/A',
-      mensaje: '🚨 Dirección inválida — debe ser 0x seguido de 40 caracteres'
+      mensaje: '🚨 Dirección inválida'
     });
   }
 
@@ -24,29 +24,30 @@ app.post('/analizar', async (req, res) => {
 
   try {
     const url = explorers[red] || explorers.ethereum;
+    const apikey = process.env.ETHERSCAN_API_KEY || '6TTVEGR1VHT8SCRTVBSMH2BB3WJM9QIZZM';
     const response = await axios.get(url, {
       params: {
         module: 'contract',
         action: 'getsourcecode',
         address: contrato,
-        apikey: process.env.ETHERSCAN_API_KEY
+        apikey: apikey
       }
     });
 
     const data = response.data.result[0];
+    const nombre = data.ContractName && data.ContractName !== '' ? data.ContractName : 'Desconocido';
+    const compilador = data.CompilerVersion && data.CompilerVersion !== '' ? data.CompilerVersion : 'N/A';
     const verificado = data.SourceCode !== '';
 
     res.json({
       verificado,
-      nombre: data.ContractName || 'Desconocido',
-      compilador: data.CompilerVersion || 'N/A',
-      mensaje: verificado
-        ? '✅ Contrato verificado — código fuente visible'
-        : '🚨 Contrato NO verificado — alto riesgo'
+      nombre,
+      compilador,
+      mensaje: verificado ? '✅ Contrato verificado — código fuente visible' : '🚨 Contrato NO verificado'
     });
 
   } catch (error) {
-    res.status(500).json({ error: 'Error al analizar el contrato' });
+    res.status(500).json({ error: 'Error al analizar: ' + error.message });
   }
 });
 
