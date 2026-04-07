@@ -49,7 +49,7 @@ app.post('/analizar', async (req, res) => {
         max_tokens: 1024,
         messages: [{
           role: 'user',
-          content: Analiza este smart contract y responde en español. Sé breve y claro:\n1. ¿Qué hace este contrato?\n2. ¿Es seguro? ¿Tiene riesgos?\n3. Recomendación final\n\nCódigo:\n${codigo}
+          content: `Analiza este smart contract en español:\n1. Qué hace?\n2. Es seguro?\n3. Recomendación final\n\nCódigo:\n${codigo}`
         }]
       }, {
         headers: {
