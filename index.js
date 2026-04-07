@@ -17,9 +17,9 @@ app.post('/analizar', async (req, res) => {
   }
 
   const explorers = {
-    ethereum: 'https://api.etherscan.io/api',
-    arbitrum: 'https://api.arbiscan.io/api',
-    polygon: 'https://api.polygonscan.com/api'
+    ethereum: 'https://api.etherscan.io/v2/api?chainid=1',
+    arbitrum: 'https://api.etherscan.io/v2/api?chainid=42161',
+    polygon: 'https://api.etherscan.io/v2/api?chainid=137'
   };
 
   try {
