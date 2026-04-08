@@ -9,10 +9,11 @@ const explorers = { ethereum: 'https://api.etherscan.io/api', bsc: 'https://api.
 app.post('/analizar', async (req, res) => {
   try {
     const { contrato, red } = req.body;
-    const response = await axios.get(explorers[red] || explorers.ethereum, { params: { module: 'contract', action: 'getsourcecode', address: contrato, apikey: '6TTVEGR1VHT8SCRTVBSMH2BB3WJME5H87I' } });
+    const url = explorers[red] || explorers.ethereum;
+    const response = await axios.get(url, { params: { module: 'contract', action: 'getsourcecode', address: contrato, apikey: process.env.ETHERSCAN_API_KEY || '6TTVEGR1VHT8SCRTVBSMH2BB3WJME5H87I' } });
     const data = response.data.result[0];
-    const nombre = data.ContractName || 'Desconocido';
-    const compilador = data.CompilerVersion || 'N/A';
+    const nombre = data.ContractName && data.ContractName !== '' ? data.ContractName : 'Desconocido';
+    const compilador = data.CompilerVersion && data.CompilerVersion !== '' ? data.CompilerVersion : 'N/A';
     const verificado = data.SourceCode !== '';
     let analisis = 'Contrato no verificado.';
     if (verificado && data.SourceCode) {
