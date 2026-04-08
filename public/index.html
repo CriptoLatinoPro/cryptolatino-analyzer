@@ -39,10 +39,11 @@ async function analizar() {
   });
   const data = await res.json();
   document.getElementById('resultado').innerHTML = `
-    <h3>${data.mensaje}</h3>
+  <h3>${data.mensaje}</h3>
   <p>Nombre: ${data.nombre}</p>
   <p>Compilador: ${data.compilador}</p>
   <hr>
+  <p>${data.analisis}</p>
 `;
 }
 </script>
