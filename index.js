@@ -6,38 +6,51 @@ app.use(express.static('public'));
 
 app.post('/analizar', async (req, res) => {
   const { contrato, red } = req.body;
+
   if (!contrato || !contrato.match(/^0x[a-fA-F0-9]{40}$/)) {
-    return res.json({ mensaje: 'Direccion invalida', nombre: 'N/A', compilador: 'N/A', analisis: '' });
+    return res.json({
+      verificado: false,
+      nombre: 'N/A',
+      compilador: 'N/A',
+      mensaje: '🚨 Dirección inválida'
+    });
   }
+
   const explorers = {
     ethereum: 'https://api.etherscan.io/v2/api?chainid=1',
     arbitrum: 'https://api.etherscan.io/v2/api?chainid=42161',
     polygon: 'https://api.etherscan.io/v2/api?chainid=137'
   };
+
   try {
     const url = explorers[red] || explorers.ethereum;
     const apikey = process.env.ETHERSCAN_API_KEY || '6TTVEGR1VHT8SCRTVBSMH2BB3WJM9QIZZM';
-    const response = await axios.get(url, { params: { module: 'contract', action: 'getsourcecode', address: contrato, apikey } });
+    const response = await axios.get(url, {
+      params: {
+        module: 'contract',
+        action: 'getsourcecode',
+        address: contrato,
+        apikey: apikey
+      }
+    });
+
     const data = response.data.result[0];
-    const nombre = data.ContractName || 'Desconocido';
-    const compilador = data.CompilerVersion || 'N/A';
+    const nombre = data.ContractName && data.ContractName !== '' ? data.ContractName : 'Desconocido';
+    const compilador = data.CompilerVersion && data.CompilerVersion !== '' ? data.CompilerVersion : 'N/A';
     const verificado = data.SourceCode !== '';
-    const mensaje = verificado ? 'Contrato verificado' : 'Contrato NO verificado';
-    let analisis = '';
-    if (verificado) {
-      const codigo = data.SourceCode.substring(0, 3000);
-      const anthropicKey = process.env.ANTHROPIC_API_KEY;
-      const ai = await axios.post('https://api.anthropic.com/v1/messages', {
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: 'Analiza este contrato: ' + codigo }]
-      }, { headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' } });
-      analisis = ai.data.content[0].text;
-    }
-    res.json({ mensaje, nombre, compilador, analisis });
+
+    res.json({
+      verificado,
+      nombre,
+      compilador,
+      mensaje: verificado ? '✅ Contrato verificado — código fuente visible' : '🚨 Contrato NO verificado'
+    });
+
   } catch (error) {
-    res.status(500).json({ mensaje: 'Error', nombre: 'N/A', compilador: 'N/A', analisis: error.message });
+    res.status(500).json({ error: 'Error al analizar: ' + error.message });
   }
 });
 
-app.listen(3000, () => console.log('Servidor corriendo'));
+app.listen(3000, () => {
+  console.log('Servidor corriendo en http://localhost:3000');
+});
