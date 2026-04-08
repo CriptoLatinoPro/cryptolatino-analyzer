@@ -1,50 +1,131 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>CryptoLatino - Analizador de Contratos</title>
-<style>
-  body { font-family: Arial, sans-serif; background: #0a1628; color: white; margin: 0; padding: 20px; }
-  h1 { color: #F5A623; text-align: center; }
-  p { text-align: center; color: #aaa; }
-  .container { max-width: 600px; margin: 40px auto; }
-  input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; font-size: 14px; }
-  button { width: 100%; padding: 14px; background: #F5A623; color: black; font-weight: bold; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-  #resultado { margin-top: 20px; padding: 20px; background: #1a2e4a; border-radius: 8px; display: none; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CryptoLatino - Analizador de Smart Contracts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    body { background: #0f172a; color: #e2e8f0; }
+    .tab-active { border-bottom: 3px solid #f59e0b; color: #f59e0b; }
+  </style>
 </head>
-<body>
-<div class="container">
-  <h1>🔐 Analizador de Smart Contracts</h1>
-  <p>Verifica cualquier contrato en español — gratis</p>
-  <input id="contrato" type="text" placeholder="Pega la dirección del contrato aquí..."/>
-  <select id="red">
-    <option value="ethereum">Ethereum</option>
-    <option value="arbitrum">Arbitrum</option>
-    <option value="polygon">Polygon</option>
-  </select>
-  <button onclick="analizar()">🔍 Analizar Contrato</button>
-  <div id="resultado"></div>
+<body class="min-h-screen">
+<div class="max-w-4xl mx-auto p-6">
+  <h1 class="text-4xl font-bold text-center mb-2">🔐 Analizador de Smart Contracts</h1>
+  <p class="text-center text-orange-400 mb-8">Con Inteligencia Artificial — en Español</p>
+
+  <div class="flex justify-center mb-8 border-b border-gray-700">
+    <button onclick="openTab(0)" class="tab tab-active px-8 py-4 text-lg font-semibold" id="tab0">Gratuito</button>
+    <button onclick="openTab(1)" class="tab px-8 py-4 text-lg font-semibold" id="tab1">Premium <span class="text-xs bg-orange-500 text-black px-2 py-1 rounded-full">PAGO</span></button>
+  </div>
+
+  <div id="content0" class="tab-content">
+    <div class="bg-slate-900 p-8 rounded-2xl">
+      <h2 class="text-2xl font-semibold mb-6">📍 Analizar contrato por dirección</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-sm mb-2">Dirección del contrato</label>
+          <input id="direccion" type="text" placeholder="0x..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-5 py-4 text-lg">
+        </div>
+        <div>
+          <label class="block text-sm mb-2">Red</label>
+          <select id="red" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-5 py-4">
+            <option value="ethereum">Ethereum</option>
+            <option value="bsc">BSC</option>
+            <option value="polygon">Polygon</option>
+            <option value="arbitrum">Arbitrum</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="analizarGratis()" class="mt-8 w-full bg-orange-500 hover:bg-orange-600 text-black font-bold text-xl py-5 rounded-2xl">
+        <i class="fas fa-search"></i> ANALIZAR CON IA
+      </button>
+    </div>
+  </div>
+
+  <div id="content1" class="tab-content hidden">
+    <div class="bg-slate-900 p-8 rounded-2xl">
+      <h2 class="text-2xl font-semibold mb-6">💎 Modo Premium</h2>
+      <textarea id="codigo" rows="12" placeholder="Pega aquí tu código Solidity..." class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-6 font-mono text-sm"></textarea>
+      <div class="flex flex-wrap gap-3 mt-6">
+        <button onclick="analizarPremium('analizar')" class="flex-1 bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-semibold">Analizar</button>
+        <button onclick="analizarPremium('corregir')" class="flex-1 bg-purple-600 hover:bg-purple-700 py-4 rounded-2xl font-semibold">Corregir</button>
+        <button onclick="analizarPremium('generar')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 py-4 rounded-2xl font-semibold">Generar</button>
+      </div>
+      <div id="descripcionDiv" class="hidden mt-4">
+        <textarea id="descripcion" rows="3" placeholder="Describe el contrato que quieres generar..." class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div id="resultado" class="mt-10 hidden bg-slate-900 rounded-3xl p-8"></div>
 </div>
+
 <script>
-async function analizar() {
-  const contrato = document.getElementById('contrato').value;
+function openTab(n) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('tab-active', i===n));
+  document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('hidden', i!==n));
+}
+
+async function analizarGratis() {
+  const direccion = document.getElementById('direccion').value.trim();
   const red = document.getElementById('red').value;
-  document.getElementById('resultado').style.display = 'block';
-  document.getElementById('resultado').innerHTML = 'Analizando...';
-  const res = await fetch('/analizar', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ contrato, red })
-  });
-  const data = await res.json();
-  document.getElementById('resultado').innerHTML = `
-  <h3>${data.mensaje}</h3>
-  <p>Nombre: ${data.nombre}</p>
-  <p>Compilador: ${data.compilador}</p>
-  <hr>
-  <p>${data.analisis}</p>
-`;
+  if (!direccion) return alert('Ingresa una direccion');
+  document.getElementById('resultado').innerHTML = '<p class="text-center text-orange-400 text-xl">Analizando...</p>';
+  document.getElementById('resultado').classList.remove('hidden');
+  try {
+    const res = await fetch('/analizar-gratis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contrato: direccion, red })
+    });
+    const data = await res.json();
+    mostrarResultado(data);
+  } catch(e) {
+    document.getElementById('resultado').innerHTML = '<p class="text-red-400">Error conectando con el servidor</p>';
+  }
+}
+
+async function analizarPremium(accion) {
+  const codigo = document.getElementById('codigo').value.trim();
+  const descripcion = document.getElementById('descripcion') ? document.getElementById('descripcion').value.trim() : '';
+  if (accion === 'generar') {
+    document.getElementById('descripcionDiv').classList.remove('hidden');
+    if (!descripcion) return alert('Describe el contrato');
+  } else if (!codigo) return alert('Pega tu codigo Solidity');
+  document.getElementById('resultado').innerHTML = '<p class="text-center text-orange-400 text-xl">Analizando con IA...</p>';
+  document.getElementById('resultado').classList.remove('hidden');
+  try {
+    const res = await fetch('/analizar-pago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codigo, accion, descripcion })
+    });
+    const data = await res.json();
+    mostrarResultado(data.analisis ? data : { analisis: data });
+  } catch(e) {
+    document.getElementById('resultado').innerHTML = '<p class="text-red-400">Error</p>';
+  }
+}
+
+function mostrarResultado(data) {
+  const div = document.getElementById('resultado');
+  const a = data.analisis || {};
+  div.innerHTML = `
+    <h3 class="text-2xl font-bold mb-4">${data.nombre || 'Contrato'} <span class="text-green-400 text-lg">${data.mensaje || ''}</span></h3>
+    ${data.compilador ? <p class="text-slate-400 mb-6">Compilador: ${data.compilador}</p> : ''}
+    <p class="text-orange-400 text-xl font-bold mb-4">Seguridad: ${a.seguridad || 'N/A'}</p>
+    <p class="mb-6">${a.razon_seguridad || ''}</p>
+    <div class="space-y-4">
+      ${a.explicacion1 ? <div><strong>¿Qué hace?</strong><br>${a.explicacion1}</div> : ''}
+      ${a.explicacion2 ? <div><strong>Funciones:</strong><br>${a.explicacion2}</div> : ''}
+      ${a.explicacion3 ? <div><strong>Riesgos:</strong><br>${a.explicacion3}</div> : ''}
+      ${a.explicacion4 ? <div><strong>Recomendaciones:</strong><br>${a.explicacion4}</div> : ''}
+    </div>
+  `;
+  div.scrollIntoView({ behavior: 'smooth' });
 }
 </script>
 </body>
