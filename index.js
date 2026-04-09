@@ -1,7 +1,6 @@
 const express = require('express');
 const Anthropic = require('@anthropic-ai/sdk');
-const fetch = require('node-fetch');
-const path = require('path');
+const https = require('https');
 
 const app = express();
 app.use(express.json());
@@ -9,18 +8,25 @@ app.use(express.static('public'));
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// GRATIS
+function httpsGet(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(JSON.parse(data)));
+    }).on('error', reject);
+  });
+}
+
 app.post('/analizar-gratis', async (req, res) => {
   try {
-    const { address, network } = req.body;
+    const { address } = req.body;
     if (!address) return res.status(400).json({ error: 'Dirección requerida' });
 
-    const chainId = network === 'bsc' ? 'bnb' : 'eth';
     const apiKey = process.env.ETHERSCAN_API_KEY;
-    const url = `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${apiKey}`;
+    const url = https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${apiKey};
 
-    const response = await fetch(url);
-    const data = await response.json();
+    const data = await httpsGet(url);
     const result = data.result?.[0];
 
     if (!result || result.SourceCode === '') {
@@ -43,23 +49,21 @@ app.post('/analizar-gratis', async (req, res) => {
   }
 });
 
-// PREMIUM
 app.post('/analizar-pago', async (req, res) => {
   try {
     const { codigo, accion, descripcion } = req.body;
 
     if (accion !== 'generar' && (!codigo || codigo.length < 40)) {
-      return res.status(400).json({ error: 'El código Solidity es demasiado corto' });
+      return res.status(400).json({ error: 'Código muy corto' });
     }
 
     let prompt = '';
-
     if (accion === 'generar' && descripcion) {
-      prompt = `Genera un smart contract Solidity completo, seguro y moderno basado en: ${descripcion}. Responde SOLO con JSON: {"seguridad":"ALTO","razon_seguridad":"...","explicacion1":"...","explicacion2":"...","explicacion3":"...","explicacion4":"...","codigo":"// Solidity code aqui"}`;
+      prompt = Genera un smart contract Solidity completo y seguro basado en: ${descripcion}. Responde SOLO con JSON: {"seguridad":"ALTO","razon_seguridad":"...","explicacion1":"...","explicacion2":"...","explicacion3":"...","explicacion4":"...","codigo":"// code"};
     } else if (accion === 'corregir') {
-      prompt = `Actúa como auditor experto. Corrige, optimiza y fortalece este contrato Solidity. Responde SOLO con JSON: {"seguridad":"ALTO","razon_seguridad":"...","explicacion1":"...","explicacion2":"...","explicacion3":"...","explicacion4":"...","codigo":"// codigo corregido"}. Contrato: ${codigo.substring(0, 7000)}`;
+      prompt = Corrige y optimiza este contrato Solidity. Responde SOLO con JSON: {"seguridad":"ALTO","razon_seguridad":"...","explicacion1":"...","explicacion2":"...","explicacion3":"...","explicacion4":"...","codigo":"// code"}. Contrato: ${codigo.substring(0, 7000)};
     } else {
-      prompt = `Analiza este smart contract Solidity en español de forma profesional. Responde SOLO con JSON: {"seguridad":"ALTO","razon_seguridad":"...","explicacion1":"Qué hace el contrato","explicacion2":"Funciones principales","explicacion3":"Riesgos y vulnerabilidades","explicacion4":"Recomendaciones"}. Contrato: ${codigo.substring(0, 7000)}`;
+      prompt = Analiza este smart contract en español. Responde SOLO con JSON: {"seguridad":"ALTO","razon_seguridad":"...","explicacion1":"Qué hace","explicacion2":"Funciones","explicacion3":"Riesgos","explicacion4":"Recomendaciones"}. Contrato: ${codigo.substring(0, 7000)};
     }
 
     const msg = await anthropic.messages.create({
@@ -70,7 +74,7 @@ app.post('/analizar-pago', async (req, res) => {
 
     let resultado;
     try {
-      const text = msg.content[0].text.replace(/```json|```/g, '').trim();
+      const text = msg.content[0].text.replace(/json|/g, '').trim();
       resultado = JSON.parse(text);
     } catch (e) {
       resultado = {
