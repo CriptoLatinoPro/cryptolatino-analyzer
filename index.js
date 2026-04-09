@@ -3,49 +3,64 @@ const Anthropic = require('@anthropic-ai/sdk');
 const https = require('https');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(express.static('public'));
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-function httpsGet(url) {
+function isEthAddress(address) {
+  return /^0x[a-fA-F0-9]{40}$/.test(address);
+}
+
+function fetchJson(url) {
   return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
+    const req = https.get(url, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve(JSON.parse(data)));
-    }).on('error', reject);
+      res.on('end', () => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          return reject(new Error('HTTP ' + res.statusCode));
+        }
+        try { resolve(JSON.parse(data)); }
+        catch { reject(new Error('Respuesta invalida de Etherscan')); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(10000, () => req.destroy(new Error('Timeout')));
   });
+}
+
+function safeParseJson(text) {
+  const cleaned = text.replace(/json|/g, '').trim();
+  return JSON.parse(cleaned);
 }
 
 app.post('/analizar-gratis', async (req, res) => {
   try {
     const { address } = req.body;
-    if (!address) return res.status(400).json({ error: 'Dirección requerida' });
 
-    const apiKey = process.env.ETHERSCAN_API_KEY;
-    const url = https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${apiKey};
+    if (!address) return res.status(400).json({ error: 'Direccion requerida' });
+    if (!isEthAddress(address)) return res.status(400).json({ error: 'Direccion Ethereum invalida' });
 
-    const data = await httpsGet(url);
-    const result = data.result?.[0];
+    const key = process.env.ETHERSCAN_API_KEY;
+    if (!key) return res.status(500).json({ error: 'Falta ETHERSCAN_API_KEY en variables' });
 
-    if (!result || result.SourceCode === '') {
-      return res.json({
-        nombre: 'No verificado',
-        compilador: 'N/A',
-        mensaje: '⚠️ Contrato no verificado en Etherscan'
-      });
+    const url = 'https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + address + '&apikey=' + key;
+    const data = await fetchJson(url);
+
+    if (data.status !== '1' || !Array.isArray(data.result) || !data.result[0]) {
+      return res.status(404).json({ error: 'Contrato no encontrado o no verificado' });
     }
 
-    res.json({
-      nombre: result.ContractName || 'Sin nombre',
-      compilador: result.CompilerVersion || 'N/A',
-      mensaje: '✅ Contrato encontrado'
+    const r = data.result[0];
+    return res.json({
+      nombre: r.ContractName || 'Sin nombre',
+      compilador: r.CompilerVersion || 'N/A',
+      mensaje: r.SourceCode ? 'Contrato encontrado' : 'Contrato no verificado'
     });
 
   } catch (err) {
-    console.error('Error gratis:', err.message);
-    res.status(500).json({ error: 'Error al consultar Etherscan' });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -54,50 +69,52 @@ app.post('/analizar-pago', async (req, res) => {
     const { codigo, accion, descripcion } = req.body;
 
     if (accion !== 'generar' && (!codigo || codigo.length < 40)) {
-      return res.status(400).json({ error: 'Código muy corto' });
+      return res.status(400).json({ error: 'Codigo muy corto' });
+    }
+    if (accion === 'generar' && !descripcion) {
+      return res.status(400).json({ error: 'Descripcion requerida para generar' });
     }
 
     let prompt = '';
-    if (accion === 'generar' && descripcion) {
-      prompt = Genera un smart contract Solidity completo y seguro basado en: ${descripcion}. Responde SOLO con JSON: {"seguridad":"ALTO","razon_seguridad":"...","explicacion1":"...","explicacion2":"...","explicacion3":"...","explicacion4":"...","codigo":"// code"};
+    if (accion === 'generar') {
+      prompt = 'Genera un smart contract Solidity completo basado en: ' + descripcion + '. Responde SOLO con JSON valido con estas claves: seguridad, razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo.';
     } else if (accion === 'corregir') {
-      prompt = Corrige y optimiza este contrato Solidity. Responde SOLO con JSON: {"seguridad":"ALTO","razon_seguridad":"...","explicacion1":"...","explicacion2":"...","explicacion3":"...","explicacion4":"...","codigo":"// code"}. Contrato: ${codigo.substring(0, 7000)};
+      prompt = 'Corrige este contrato Solidity. Responde SOLO con JSON valido con estas claves: seguridad, razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo. Contrato: ' + codigo.substring(0, 7000);
     } else {
-      prompt = Analiza este smart contract en español. Responde SOLO con JSON: {"seguridad":"ALTO","razon_seguridad":"...","explicacion1":"Qué hace","explicacion2":"Funciones","explicacion3":"Riesgos","explicacion4":"Recomendaciones"}. Contrato: ${codigo.substring(0, 7000)};
+      prompt = 'Analiza este contrato Solidity en espanol. Responde SOLO con JSON valido con estas claves: seguridad, razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4. Contrato: ' + codigo.substring(0, 7000);
     }
 
     const msg = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
+      system: 'Eres un auditor experto de smart contracts. Respondes UNICAMENTE con JSON valido, sin markdown ni texto adicional.',
       messages: [{ role: 'user', content: prompt }]
     });
 
+    const text = msg.content && msg.content[0] && msg.content[0].text || '';
+
     let resultado;
     try {
-      const text = msg.content[0].text.replace(/json|/g, '').trim();
-      resultado = JSON.parse(text);
-    } catch (e) {
+      resultado = safeParseJson(text);
+    } catch {
       resultado = {
         seguridad: 'MEDIO',
-        razon_seguridad: 'Análisis completado',
-        explicacion1: msg.content[0].text,
+        razon_seguridad: 'No se pudo parsear JSON',
+        explicacion1: text,
         explicacion2: '', explicacion3: '', explicacion4: ''
       };
     }
 
-    res.json({
-      nombre: accion === 'generar' ? 'Contrato Generado' : 'Análisis Premium',
-      mensaje: '✅ Análisis completado',
+    return res.json({
+      nombre: accion === 'generar' ? 'Contrato Generado' : 'Analisis Premium',
+      mensaje: 'Analisis completado',
       analisis: resultado,
       modo: accion || 'analizar'
     });
 
   } catch (err) {
-    console.error('Error premium:', err.message);
-    res.status(500).json({ error: 'Error al procesar con Claude' });
+    return res.status(500).json({ error: err.message });
   }
 });
 
-app.listen(3000, () => {
-  console.log('🚀 Servidor corriendo en puerto 3000');
-});
+app.listen(3000, () => console.log('Servidor en puerto 3000'));
