@@ -9,6 +9,7 @@
   <style>
     body { background: #0f172a; color: #e2e8f0; }
     .tab-active { border-bottom: 3px solid #f59e0b; color: #f59e0b; }
+    .result-card { transition: all 0.3s ease; }
   </style>
 </head>
 <body class="min-h-screen">
@@ -16,22 +17,25 @@
   <h1 class="text-4xl font-bold text-center mb-2">🔐 Analizador de Smart Contracts</h1>
   <p class="text-center text-orange-400 mb-8">Con Inteligencia Artificial — en Español</p>
 
+  <!-- Tabs -->
   <div class="flex justify-center mb-8 border-b border-gray-700">
     <button onclick="openTab(0)" class="tab tab-active px-8 py-4 text-lg font-semibold" id="tab0">Gratuito</button>
     <button onclick="openTab(1)" class="tab px-8 py-4 text-lg font-semibold" id="tab1">Premium <span class="text-xs bg-orange-500 text-black px-2 py-1 rounded-full">PAGO</span></button>
   </div>
 
+  <!-- Tab Gratuito -->
   <div id="content0" class="tab-content">
     <div class="bg-slate-900 p-8 rounded-2xl">
       <h2 class="text-2xl font-semibold mb-6">📍 Analizar contrato por dirección</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="md:col-span-2">
           <label class="block text-sm mb-2">Dirección del contrato</label>
-          <input id="direccion" type="text" placeholder="0x..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-5 py-4 text-lg">
+          <input id="direccion" type="text" placeholder="0x..." 
+                 class="w-full bg-slate-800 border border-slate-700 rounded-xl px-5 py-4 text-lg focus:outline-none focus:border-orange-500">
         </div>
         <div>
           <label class="block text-sm mb-2">Red</label>
-          <select id="red" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-5 py-4">
+          <select id="red" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-5 py-4 focus:outline-none focus:border-orange-500">
             <option value="ethereum">Ethereum</option>
             <option value="bsc">BSC</option>
             <option value="polygon">Polygon</option>
@@ -39,92 +43,152 @@
           </select>
         </div>
       </div>
-      <button onclick="analizarGratis()" class="mt-8 w-full bg-orange-500 hover:bg-orange-600 text-black font-bold text-xl py-5 rounded-2xl">
+      <button onclick="analizarGratis()" id="btnGratis"
+              class="mt-8 w-full bg-orange-500 hover:bg-orange-600 text-black font-bold text-xl py-5 rounded-2xl transition">
         <i class="fas fa-search"></i> ANALIZAR CON IA
       </button>
     </div>
   </div>
 
+  <!-- Tab Premium -->
   <div id="content1" class="tab-content hidden">
     <div class="bg-slate-900 p-8 rounded-2xl">
       <h2 class="text-2xl font-semibold mb-6">💎 Modo Premium</h2>
-      <textarea id="codigo" rows="12" placeholder="Pega aquí tu código Solidity..." class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-6 font-mono text-sm"></textarea>
+      <textarea id="codigo" rows="12" placeholder="Pega aquí tu código Solidity..." 
+                class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-6 font-mono text-sm focus:outline-none focus:border-orange-500"></textarea>
+      
       <div class="flex flex-wrap gap-3 mt-6">
         <button onclick="analizarPremium('analizar')" class="flex-1 bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-semibold">Analizar</button>
         <button onclick="analizarPremium('corregir')" class="flex-1 bg-purple-600 hover:bg-purple-700 py-4 rounded-2xl font-semibold">Corregir</button>
         <button onclick="analizarPremium('generar')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 py-4 rounded-2xl font-semibold">Generar</button>
       </div>
+
       <div id="descripcionDiv" class="hidden mt-4">
-        <textarea id="descripcion" rows="3" placeholder="Describe el contrato que quieres generar..." class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4"></textarea>
+        <textarea id="descripcion" rows="3" placeholder="Describe el contrato que quieres generar..." 
+                  class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 focus:outline-none focus:border-orange-500"></textarea>
       </div>
     </div>
   </div>
 
-  <div id="resultado" class="mt-10 hidden bg-slate-900 rounded-3xl p-8"></div>
+  <!-- Resultado -->
+  <div id="resultado" class="mt-10 hidden bg-slate-900 rounded-3xl p-8 result-card"></div>
 </div>
 
 <script>
 function openTab(n) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('tab-active', i===n));
-  document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('hidden', i!==n));
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('tab-active', i === n));
+  document.querySelectorAll('.tab-content').forEach((c, i) => c.classList.toggle('hidden', i !== n));
 }
 
 async function analizarGratis() {
   const direccion = document.getElementById('direccion').value.trim();
   const red = document.getElementById('red').value;
-  if (!direccion) return alert('Ingresa una direccion');
-  document.getElementById('resultado').innerHTML = '<p class="text-center text-orange-400 text-xl">Analizando...</p>';
+  const btn = document.getElementById('btnGratis');
+
+  if (!direccion) return alert('Ingresa una dirección del contrato');
+  if (!direccion.startsWith('0x')) return alert('La dirección debe empezar con 0x');
+
+  btn.disabled = true;
+  btn.innerHTML = <i class="fas fa-spinner fa-spin"></i> ANALIZANDO...;
+
+  document.getElementById('resultado').innerHTML = '<p class="text-center text-orange-400 text-xl py-12">Analizando contrato con IA...</p>';
   document.getElementById('resultado').classList.remove('hidden');
+
   try {
     const res = await fetch('/analizar-gratis', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contrato: direccion, red })
     });
+
     const data = await res.json();
     mostrarResultado(data);
-  } catch(e) {
-    document.getElementById('resultado').innerHTML = '<p class="text-red-400">Error conectando con el servidor</p>';
+  } catch (e) {
+    document.getElementById('resultado').innerHTML = `
+      <p class="text-red-400 text-center text-xl py-12">
+        Error de conexión con el servidor<br>
+        <small class="text-slate-500">Inténtalo de nuevo</small>
+      </p>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = <i class="fas fa-search"></i> ANALIZAR CON IA;
   }
 }
 
 async function analizarPremium(accion) {
   const codigo = document.getElementById('codigo').value.trim();
-  const descripcion = document.getElementById('descripcion') ? document.getElementById('descripcion').value.trim() : '';
+  let descripcion = '';
+
   if (accion === 'generar') {
     document.getElementById('descripcionDiv').classList.remove('hidden');
-    if (!descripcion) return alert('Describe el contrato');
-  } else if (!codigo) return alert('Pega tu codigo Solidity');
-  document.getElementById('resultado').innerHTML = '<p class="text-center text-orange-400 text-xl">Analizando con IA...</p>';
+    descripcion = document.getElementById('descripcion').value.trim();
+    if (!descripcion) return alert('Por favor describe el contrato que quieres generar');
+  } else if (!codigo) {
+    return alert('Pega tu código Solidity');
+  }
+
+  document.getElementById('resultado').innerHTML = '<p class="text-center text-orange-400 text-xl py-12">Procesando con IA...</p>';
   document.getElementById('resultado').classList.remove('hidden');
+
   try {
     const res = await fetch('/analizar-pago', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ codigo, accion, descripcion })
     });
+
     const data = await res.json();
-    mostrarResultado(data.analisis ? data : { analisis: data });
-  } catch(e) {
-    document.getElementById('resultado').innerHTML = '<p class="text-red-400">Error</p>';
+    mostrarResultado(data);
+  } catch (e) {
+    document.getElementById('resultado').innerHTML = `
+      <p class="text-red-400 text-center text-xl py-12">Error de conexión</p>`;
   }
 }
 
 function mostrarResultado(data) {
   const div = document.getElementById('resultado');
-  const a = data.analisis || {};
+  const a = data.analisis || data;
+
   div.innerHTML = `
-    <h3 class="text-2xl font-bold mb-4">${data.nombre || 'Contrato'} <span class="text-green-400 text-lg">${data.mensaje || ''}</span></h3>
+    <h3 class="text-2xl font-bold mb-4">
+      ${data.nombre || 'Contrato Analizado'} 
+      <span class="text-green-400 text-lg">${data.mensaje || ''}</span>
+    </h3>
+
     ${data.compilador ? <p class="text-slate-400 mb-6">Compilador: ${data.compilador}</p> : ''}
-    <p class="text-orange-400 text-xl font-bold mb-4">Seguridad: ${a.seguridad || 'N/A'}</p>
-    <p class="mb-6">${a.razon_seguridad || ''}</p>
-    <div class="space-y-4">
-      ${a.explicacion1 ? <div><strong>¿Qué hace?</strong><br>${a.explicacion1}</div> : ''}
-      ${a.explicacion2 ? <div><strong>Funciones:</strong><br>${a.explicacion2}</div> : ''}
-      ${a.explicacion3 ? <div><strong>Riesgos:</strong><br>${a.explicacion3}</div> : ''}
-      ${a.explicacion4 ? <div><strong>Recomendaciones:</strong><br>${a.explicacion4}</div> : ''}
+
+    <p class="text-orange-400 text-xl font-bold mb-4">
+      Seguridad: ${a.seguridad || 'N/A'}
+    </p>
+    <p class="mb-6 text-slate-300">${a.razon_seguridad || ''}</p>
+
+    <div class="space-y-6">
+      ${a.explicacion1 ? `
+        <div class="bg-slate-800 p-5 rounded-xl">
+          <strong>¿Qué hace este contrato?</strong><br><br>
+          ${a.explicacion1}
+        </div>` : ''}
+
+      ${a.explicacion2 ? `
+        <div class="bg-slate-800 p-5 rounded-xl">
+          <strong>Funciones principales:</strong><br><br>
+          ${a.explicacion2}
+        </div>` : ''}
+
+      ${a.explicacion3 ? `
+        <div class="bg-slate-800 p-5 rounded-xl border border-red-500/30">
+          <strong>⚠️ Riesgos detectados:</strong><br><br>
+          ${a.explicacion3}
+        </div>` : ''}
+
+      ${a.explicacion4 ? `
+        <div class="bg-slate-800 p-5 rounded-xl">
+          <strong>Recomendaciones de seguridad:</strong><br><br>
+          ${a.explicacion4}
+        </div>` : ''}
     </div>
   `;
+
   div.scrollIntoView({ behavior: 'smooth' });
 }
 </script>
