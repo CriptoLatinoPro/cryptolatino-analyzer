@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const Anthropic = require('@anthropic-ai/sdk');
-require('dotenv').config();
+
 
 const app = express();
 app.use(express.json());
