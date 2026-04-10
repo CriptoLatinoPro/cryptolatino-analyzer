@@ -52,7 +52,7 @@ function safeParseJson(text) {
 
 app.post('/analizar-gratis', async (req, res) => {
   try {
-    const { address } = req.body;
+    const { address,network } = req.body;
 
     if (!address) return res.status(400).json({ error: 'Direccion requerida' });
     if (!isEthAddress(address)) return res.status(400).json({ error: 'Direccion Ethereum invalida' });
@@ -60,7 +60,9 @@ app.post('/analizar-gratis', async (req, res) => {
     const key = process.env.ETHERSCAN_KEY;
     if (!key) return res.status(500).json({ error: 'Falta ETHERSCAN_KEY en variables' });
 
-    const url = 'https://api.etherscan.io/v2/api?chainid=1&module=contract&action=getsourcecode&address=' + address + '&apikey=' + key;
+    const chainIds = { eth: '1', arb: '42161', pol: '137', bsc: '56' };
+    const chainId = chainIds[network] || '1';
+    const url = 'https://api.etherscan.io/v2/api?chainid=' + chainId + '&module=contract&action=getsourcecode&address=' + address + '&apikey=' + key;
     const data = await fetchJson(url);
 
     const r = data.result[0];
