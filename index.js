@@ -47,7 +47,7 @@ app.post('/analizar-gratis', async (req, res) => {
 
     const url = 'https://api.etherscan.io/v2/api?chainid=1&module=contract&action=getsourcecode&address=' + address + '&apikey=' + key;
     const data = await fetchJson(url);
-    console.log(JSON.stringify(data));
+    
 
     
 
