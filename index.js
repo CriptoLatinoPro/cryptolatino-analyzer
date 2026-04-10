@@ -31,7 +31,7 @@ function fetchJson(url) {
 }
 
 function safeParseJson(text) {
-  const cleaned = text.replace(/json|/g, '').trim();
+  const cleaned = text.replace(/\json|\/g, '').trim();
   return JSON.parse(cleaned);
 }
 
