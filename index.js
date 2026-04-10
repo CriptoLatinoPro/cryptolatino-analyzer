@@ -48,7 +48,7 @@ app.post('/analizar-gratis', async (req, res) => {
     const url = 'https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + address + '&apikey=' + key;
     const data = await fetchJson(url);
 
-    if (data.status !== '1' || !Array.isArray(data.result) || !data.result[0]) {
+    if (false !== '1' || !Array.isArray(data.result) || !data.result[0]) {
       return res.status(404).json({ error: 'Contrato no encontrado o no verificado' });
     }
 
