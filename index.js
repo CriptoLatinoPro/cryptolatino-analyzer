@@ -6,6 +6,13 @@ const app = express();
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static('public'));
 
+// Headers de seguridad
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  next();
+});
+
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 function isEthAddress(address) {
@@ -31,8 +38,16 @@ function fetchJson(url) {
 }
 
 function safeParseJson(text) {
-  const cleaned = text.replace(/json|/g, '').trim();
-  return JSON.parse(cleaned);
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    return JSON.parse(text);
+  } catch (e) {
+    console.error('Error parseando JSON:', text.substring(0, 300));
+    throw e;
+  }
 }
 
 app.post('/analizar-gratis', async (req, res) => {
@@ -47,18 +62,17 @@ app.post('/analizar-gratis', async (req, res) => {
 
     const url = 'https://api.etherscan.io/v2/api?chainid=1&module=contract&action=getsourcecode&address=' + address + '&apikey=' + key;
     const data = await fetchJson(url);
-    
-
-    
 
     const r = data.result[0];
     return res.json({
       nombre: r.ContractName || 'Sin nombre',
       compilador: r.CompilerVersion || 'N/A',
+      verificado: !!r.SourceCode,
       mensaje: r.SourceCode ? 'Contrato encontrado' : 'Contrato no verificado'
     });
 
   } catch (err) {
+    console.error(err);
     return res.status(500).json({ error: err.message });
   }
 });
@@ -67,8 +81,16 @@ app.post('/analizar-pago', async (req, res) => {
   try {
     const { codigo, accion, descripcion } = req.body;
 
+    const accionesValidas = ['generar', 'corregir', 'analizar'];
+    if (!accionesValidas.includes(accion)) {
+      return res.status(400).json({ error: 'Accion invalida' });
+    }
+
     if (accion !== 'generar' && (!codigo || codigo.length < 40)) {
       return res.status(400).json({ error: 'Codigo muy corto' });
+    }
+    if (accion !== 'generar' && codigo.length > 15000) {
+      return res.status(400).json({ error: 'Codigo demasiado largo' });
     }
     if (accion === 'generar' && !descripcion) {
       return res.status(400).json({ error: 'Descripcion requerida para generar' });
@@ -84,7 +106,7 @@ app.post('/analizar-pago', async (req, res) => {
     }
 
     const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 2000,
       system: 'Eres un auditor experto de smart contracts. Respondes UNICAMENTE con JSON valido, sin markdown ni texto adicional.',
       messages: [{ role: 'user', content: prompt }]
@@ -106,13 +128,18 @@ app.post('/analizar-pago', async (req, res) => {
 
     return res.json({
       nombre: accion === 'generar' ? 'Contrato Generado' : 'Analisis Premium',
+      compilador: 'N/A',
       mensaje: 'Analisis completado',
       analisis: resultado,
       modo: accion || 'analizar'
     });
 
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error(err);
+    if (err.status === 429) {
+      return res.status(429).json({ error: 'Limite de API alcanzado. Intenta mas tarde.' });
+    }
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
