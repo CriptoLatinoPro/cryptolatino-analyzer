@@ -43,7 +43,7 @@ app.post('/analizar-gratis', async (req, res) => {
     if (!isEthAddress(address)) return res.status(400).json({ error: 'Direccion Ethereum invalida' });
 
     const key = process.env.ETHERSCAN_KEY;
-    if (!key) return res.status(500).json({ error: 'Falta ETHERSCAN_API_KEY en variables' });
+    if (!key) return res.status(500).json({ error: 'Falta ETHERSCAN_KEY en variables' });
 
     const url = 'https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + address + '&apikey=' + key;
     const data = await fetchJson(url);
