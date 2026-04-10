@@ -45,7 +45,7 @@ app.post('/analizar-gratis', async (req, res) => {
     const key = process.env.ETHERSCAN_KEY;
     if (!key) return res.status(500).json({ error: 'Falta ETHERSCAN_KEY en variables' });
 
-    const url = 'https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + address + '&apikey=' + key;
+    const url = 'https://api.etherscan.io/v2/api?chainid=1&module=contract&action=getsourcecode&address=' + address + '&apikey=' + key;
     const data = await fetchJson(url);
     console.log(JSON.stringify(data));
 
