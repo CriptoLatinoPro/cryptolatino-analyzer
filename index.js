@@ -42,22 +42,15 @@ app.post('/analizar-gratis', async (req, res) => {
     if (!address) return res.status(400).json({ error: 'Direccion requerida' });
     if (!isEthAddress(address)) return res.status(400).json({ error: 'Direccion Ethereum invalida' });
 
-    const key = process.env.ETHERSCAN_KEY;
-    if (!key) return res.status(500).json({ error: 'Falta ETHERSCAN_API_KEY en variables' });
-
-    const url = 'https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + address + '&apikey=' + key;
+    const url = https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${key};
     const data = await fetchJson(url);
 
-    if (data.status !== '1' || !Array.isArray(data.result) || !data.result[0]) {
-      return res.status(404).json({ error: 'Contrato no encontrado o no verificado' });
-    }
-
-    const r = data.result[0];
+    const r = (data.result && data.result[0]) ? data.result[0] : {};
+    
     return res.json({
-      nombre: r.ContractName || 'Sin nombre',
+      nombre: r.ContractName || 'No verificado',
       compilador: r.CompilerVersion || 'N/A',
       mensaje: r.SourceCode ? 'Contrato encontrado' : 'Contrato no verificado'
-    });
 
   } catch (err) {
     return res.status(500).json({ error: err.message });
