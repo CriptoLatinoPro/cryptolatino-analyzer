@@ -7,6 +7,57 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-white min-h-screen p-6">
+  [6:36 p.m., 10/4/2026] Scott: app.post('/registro', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    await pool.query('INSERT INTO usuarios (email, password) VALUES ($1, $2)', [email, hash]);
+    res.json({ ok: true, mensaje: 'Cuenta creada exitosamente' });
+  } catch (err) {
+    res.status(400).json({ error: 'Email ya registrado' });
+  }
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+    if (!result.rows.length) return res.status(401).json({ error: 'Usuario no encontrado' });
+    const usuario = result.rows[0];
+    const valido = await bcrypt.compare(password, usuario.password);
+    if (!valido) return res.status(401).json({ error: 'Contraseña incorrecta' });
+    const token = jwt.sign({ id: usuario.id, plan: usuario.plan }, 'secreto123', { expiresIn: '30d' });
+    res.json({ ok: true, token, plan: usuario.plan });
+  } catch (err) {
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+[6:39 p.m., 10/4/2026] Scott: git add .
+git commit -m "feat: login y registro de usuarios"
+git push
+[6:45 p.m., 10/4/2026] Scott: git add .
+git commit -m "fix: guardar cambios index.html"
+git push
+[6:48 p.m., 10/4/2026] Scott: tail -30 public/index.html
+[7:17 p.m., 10/4/2026] Scott: <!-- MODAL LOGIN/REGISTRO -->
+<div id="modalAuth" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
+  <div class="bg-slate-800 p-8 rounded-2xl w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-6 text-center">🔐 Acceder a CryptoLatino</h2>
+    <div class="flex gap-2 mb-6">
+      <button onclick="mostrarTab('login')" id="tabLogin" class="flex-1 bg-yellow-500 text-black py-2 rounded font-bold">Iniciar Sesión</button>
+      <button onclick="mostrarTab('registro')" id="tabRegistro" class="flex-1 bg-slate-600 py-2 rounded font-bold">Registrarse</button>
+    </div>
+    <input id="authEmail" type="email" placeholder="Email" class="w-full bg-slate-700 p-3 rounded mb-3 text-white">
+    <input id="authPassword" type="password" placeholder="Contraseña" class="w-full bg-slate-700 p-3 rounded mb-4 text-white">
+    <button onclick="autenticar()" class="w-full bg-yellow-500 text-black py-3 rounded font-bold text-lg">Entrar</button>
+    <p id="authError" class="text-red-400 mt-3 text-center hidden"></p>
+    <div id="seccionPago" class="hidden mt-4">
+      <p class="text-center mb-3 text-yellow-400">¿Listo para el plan Premium?</p>
+      <button onclick="irAPagar()" class="w-full bg-green-500 text-black py-3 rounded font-bold">💳 Suscribirse $29/mes</button>
+      <p class="text-xs text-center mt-2 text-slate-400">No solo generates tu contrato — tienes 1 mes para corregirlo, mejorarlo y perfeccionarlo hasta que funcione en Remix.</p>
+    </div>
+  </div>
+</div>
 
   <div class="max-w-2xl mx-auto">
     <div class="text-center mb-8">
