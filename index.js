@@ -115,7 +115,7 @@ app.post('/analizar-pago', async (req, res) => {
     }
 
     const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: 'Eres un auditor experto de smart contracts. Respondes UNICAMENTE con JSON valido, sin markdown ni texto adicional.',
       messages: [{ role: 'user', content: prompt }]
