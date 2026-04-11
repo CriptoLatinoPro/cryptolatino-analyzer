@@ -207,10 +207,10 @@ app.post('/login', async (req, res) => {
   }
 });
 app.get('/success', (req, res) => {
-  res.send(<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pago Exitoso</title></head><body style="font-family:Arial;text-align:center;padding:50px;background:#0a0a1a;color:white"><h1 style="color:#00ff88">✅ ¡Pago Exitoso!</h1><p>Tu plan premium está activo. Ya puedes analizar contratos ilimitadamente.</p><a href="/" style="background:#00ff88;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Ir al Analizador</a></body></html>);
+  res.sendFile(__dirname + '/public/success.html');
 });
 
 app.get('/cancel', (req, res) => {
-  res.send(<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pago Cancelado</title></head><body style="font-family:Arial;text-align:center;padding:50px;background:#0a0a1a;color:white"><h1 style="color:#ff4444">❌ Pago Cancelado</h1><p>No se realizó ningún cargo. Puedes intentarlo de nuevo.</p><a href="/" style="background:#00ff88;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Volver</a></body></html>);
+  res.sendFile(__dirname + '/public/cancel.html');
 });
 app.listen(3000, () => console.log('Servidor en puerto 3000'));
