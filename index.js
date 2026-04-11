@@ -3,7 +3,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 const https = require('https');
 const { Pool } = require('pg');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-pool.query(CREATE TABLE IF NOT EXISTS usuarios (id SERIAL PRIMARY KEY, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, plan VARCHAR(50) DEFAULT 'gratis', analisis_usados INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT NOW())).then(() => console.log('DB lista')).catch(console.error);
+const initDB = async () => { try { await pool.query("CREATE TABLE IF NOT EXISTS usuarios (id SERIAL PRIMARY KEY, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, plan VARCHAR(50) DEFAULT 'gratis', analisis_usados INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT NOW())"); console.log('DB lista'); } catch(e) { console.error(e); } };
+initDB();
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
