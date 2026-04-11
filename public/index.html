@@ -7,39 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-white min-h-screen p-6">
-  [6:36 p.m., 10/4/2026] Scott: app.post('/registro', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const hash = await bcrypt.hash(password, 10);
-    await pool.query('INSERT INTO usuarios (email, password) VALUES ($1, $2)', [email, hash]);
-    res.json({ ok: true, mensaje: 'Cuenta creada exitosamente' });
-  } catch (err) {
-    res.status(400).json({ error: 'Email ya registrado' });
-  }
-});
-
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
-    if (!result.rows.length) return res.status(401).json({ error: 'Usuario no encontrado' });
-    const usuario = result.rows[0];
-    const valido = await bcrypt.compare(password, usuario.password);
-    if (!valido) return res.status(401).json({ error: 'Contraseña incorrecta' });
-    const token = jwt.sign({ id: usuario.id, plan: usuario.plan }, 'secreto123', { expiresIn: '30d' });
-    res.json({ ok: true, token, plan: usuario.plan });
-  } catch (err) {
-    res.status(500).json({ error: 'Error del servidor' });
-  }
-});
-[6:39 p.m., 10/4/2026] Scott: git add .
-git commit -m "feat: login y registro de usuarios"
-git push
-[6:45 p.m., 10/4/2026] Scott: git add .
-git commit -m "fix: guardar cambios index.html"
-git push
-[6:48 p.m., 10/4/2026] Scott: tail -30 public/index.html
-[7:17 p.m., 10/4/2026] Scott: <!-- MODAL LOGIN/REGISTRO -->
+ 
 <div id="modalAuth" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
   <div class="bg-slate-800 p-8 rounded-2xl w-full max-w-md">
     <h2 class="text-2xl font-bold mb-6 text-center">🔐 Acceder a CryptoLatino</h2>
@@ -206,6 +174,41 @@ git push
       btn.disabled = false;
       btn.textContent = '⚡ ANALIZAR PREMIUM';
     }
+    function mostrarModal() {
+  document.getElementById('modalAuth').classList.remove('hidden');
+}
+
+function mostrarTab(tab) {
+  document.getElementById('tabLogin').className = tab === 'login' ? 'flex-1 bg-yellow-500 text-black py-2 rounded font-bold' : 'flex-1 bg-slate-600 py-2 rounded font-bold';
+  document.getElementById('tabRegistro').className = tab === 'registro' ? 'flex-1 bg-yellow-500 text-black py-2 rounded font-bold' : 'flex-1 bg-slate-600 py-2 rounded font-bold';
+}
+
+async function autenticar() {
+  const email = document.getElementById('authEmail').value;
+  const password = document.getElementById('authPassword').value;
+  const esRegistro = document.getElementById('tabRegistro').className.includes('yellow');
+  const url = esRegistro ? '/registro' : '/login';
+  const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) });
+  const data = await r.json();
+  if (data.token) {
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('plan', data.plan);
+    document.getElementById('modalAuth').classList.add('hidden');
+    if (data.plan !== 'premium') document.getElementById('seccionPago').classList.remove('hidden');
+  } else if (data.ok) {
+    document.getElementById('seccionPago').classList.remove('hidden');
+  } else {
+    const err = document.getElementById('authError');
+    err.textContent = data.error;
+    err.classList.remove('hidden');
+  }
+}
+
+async function irAPagar() {
+  const r = await fetch('/crear-pago', { method: 'POST', headers: {'Content-Type':'application/json'} });
+  const data = await r.json();
+  if (data.url) window.location.href = data.url;
+}
   </script>
 </body>
 </html>
