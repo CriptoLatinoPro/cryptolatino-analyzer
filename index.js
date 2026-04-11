@@ -9,7 +9,7 @@ const initDB = async () => { try { await pool.query("CREATE TABLE IF NOT EXISTS 
 initDB();
 
 const app = express();
-app.post('/webhook', express.raw({type:'application/json'}), async(req,res)=>{ const sig=req.headers['stripe-signature']; try{ const event=require('stripe')(process.env.STRIPE_SECRET_KEY).webhooks.constructEvent(req.body,sig,process.env.STRIPE_WEBHOOK_SECRET); if(event.type==='invoice.paid'){const email=event.data.object.customer_email; if(email) await pool.query("UPDATE usuarios SET plan='premium' WHERE email=$1",[email]);} res.json({received:true}); }catch(err){res.status(400).send('Error');} });
+app.post('/webhook', express.raw({type:'application/json'}), async(req,res)=>{ const sig=req.headers['stripe-signature']; try{ const event=require('stripe')(process.env.STRIPE_SECRET_KEY).webhooks.constructEvent(req.body,sig,process.env.STRIPE_WEBHOOK_SECRET); if(event.type==='checkout.session.completed'){const session=event.data.object; const email=session.customer_email||session.customer_details?.email; if(email) await pool.query("UPDATE usuarios SET plan='premium' WHERE email=$1",[email]);} res.json({received:true}); }catch(err){res.status(400).send('Error');} });
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static('public'));
 
