@@ -144,5 +144,34 @@ app.post('/analizar-pago', async (req, res) => {
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// Crear sesión de pago
+app.post('/crear-pago', async (req, res) => {
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: 'CryptoLatino Analyzer - Plan Mensual',
+            description: 'Análisis ilimitados por 30 días'
+          },
+          unit_amount: 2900,
+          recurring: { interval: 'month' }
+        },
+        quantity: 1
+      }],
+      mode: 'subscription',
+      success_url: 'https://tudominio.com/success',
+      cancel_url: 'https://tudominio.com/cancel'
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error creando pago' });
+  }
+});
 
 app.listen(3000, () => console.log('Servidor en puerto 3000'));
