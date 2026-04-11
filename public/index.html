@@ -191,11 +191,16 @@ async function autenticar() {
   const url = esRegistro ? '/registro' : '/login';
   const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) });
   const data = await r.json();
-  if (data.token) {
+  
+    if (data.token) {
     localStorage.setItem('token', data.token);
     localStorage.setItem('plan', data.plan);
     document.getElementById('modalAuth').classList.add('hidden');
-    if (data.plan !== 'premium') document.getElementById('seccionPago').classList.remove('hidden');
+    if (data.plan === 'premium') {
+      openTab(1);
+    } else {
+      document.getElementById('seccionPago').classList.remove('hidden');
+    }
   } else if (data.ok) {
     document.getElementById('seccionPago').classList.remove('hidden');
   } else {
