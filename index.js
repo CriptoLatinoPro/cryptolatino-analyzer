@@ -205,20 +205,4 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
-,app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    return res.status(400).send('Webhook error');
-  }
-  if (event.type === 'customer.subscription.created' || event.type === 'invoice.paid') {
-    const email = event.data.object.customer_email;
-    if (email) {
-      await pool.query("UPDATE usuarios SET plan='premium' WHERE email=$1", [email]);
-    }
-  }
-  res.json({received: true});
-});
 app.listen(3000, () => console.log('Servidor en puerto 3000'));
