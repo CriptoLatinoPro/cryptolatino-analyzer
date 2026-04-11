@@ -164,8 +164,8 @@ app.post('/crear-pago', async (req, res) => {
         quantity: 1
       }],
       mode: 'subscription',
-      success_url: 'https://tudominio.com/success',
-      cancel_url: 'https://tudominio.com/cancel'
+      success_url: 'https://cryptolatino-analyzer-production.up.railway.app/success',
+      cancel_url: 'https://cryptolatino-analyzer-production.up.railway.app/cancel'
     });
     res.json({ url: session.url });
   } catch (err) {
