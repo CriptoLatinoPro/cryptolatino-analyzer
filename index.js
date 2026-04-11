@@ -2,6 +2,8 @@ const express = require('express');
 const Anthropic = require('@anthropic-ai/sdk');
 const https = require('https');
 const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const initDB = async () => { try { await pool.query("CREATE TABLE IF NOT EXISTS usuarios (id SERIAL PRIMARY KEY, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, plan VARCHAR(50) DEFAULT 'gratis', analisis_usados INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT NOW())"); console.log('DB lista'); } catch(e) { console.error(e); } };
 initDB();
@@ -178,4 +180,29 @@ app.post('/crear-pago', async (req, res) => {
   }
 });
 
+app.post('/registro', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    await pool.query('INSERT INTO usuarios (email, password) VALUES ($1, $2)', [email, hash]);
+    res.json({ ok: true, mensaje: 'Cuenta creada exitosamente' });
+  } catch (err) {
+    res.status(400).json({ error: 'Email ya registrado' });
+  }
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+    if (!result.rows.length) return res.status(401).json({ error: 'Usuario no encontrado' });
+    const usuario = result.rows[0];
+    const valido = await bcrypt.compare(password, usuario.password);
+    if (!valido) return res.status(401).json({ error: 'Contraseña incorrecta' });
+    const token = jwt.sign({ id: usuario.id, plan: usuario.plan }, 'secreto123', { expiresIn: '30d' });
+    res.json({ ok: true, token, plan: usuario.plan });
+  } catch (err) {
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
 app.listen(3000, () => console.log('Servidor en puerto 3000'));
