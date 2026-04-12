@@ -138,9 +138,7 @@
       animation: fadeUp 0.6s 0.4s ease both;
     }
 
-    .stat {
-      text-align: center;
-    }
+    .stat { text-align: center; }
 
     .stat-num {
       font-size: 2rem;
@@ -197,28 +195,24 @@
       transform: translateY(-4px);
     }
 
-    .feature-icon {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-    }
-
-    .feature-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 0.7rem;
-    }
-
-    .feature-desc {
-      color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.7;
-    }
+    .feature-icon { font-size: 2rem; margin-bottom: 1rem; }
+    .feature-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.7rem; }
+    .feature-desc { color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
 
     /* PRICING */
     .pricing-section {
       padding: 5rem 2rem;
       text-align: center;
       background: linear-gradient(180deg, transparent, rgba(245,197,66,0.03));
+    }
+
+    .pricing-title {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.2;
+      margin: 1rem auto 0;
+      text-align: center;
+      max-width: 500px;
     }
 
     .pricing-card {
@@ -253,11 +247,7 @@
       line-height: 1;
     }
 
-    .price-period {
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-top: 0.5rem;
-    }
+    .price-period { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
 
     .price-features {
       list-style: none;
@@ -275,7 +265,6 @@
     }
 
     .price-features li:last-child { border-bottom: none; }
-
     .check { color: var(--gold); font-weight: 700; }
 
     /* DISCLAIMER */
@@ -314,8 +303,8 @@
   <h1>Analiza Smart Contracts<br>con <span>Inteligencia Artificial</span></h1>
   <p class="subtitle">La única herramienta de análisis de contratos inteligentes diseñada para la comunidad latina. Detecta vulnerabilidades, corrige errores y genera contratos en segundos.</p>
   <div class="cta-group">
-    <a href="/index.html#login" class="btn-primary">🚀 Empezar Ahora — $25/mes</a>
-    <a href="/index.html" class="btn-secondary">Ver Demo Gratis</a>
+    <a href="/app.html#login" class="btn-primary">🚀 Empezar Ahora — $25/mes</a>
+    <a href="/app.html" class="btn-secondary">Ver Demo Gratis</a>
   </div>
   <div class="stats">
     <div class="stat">
@@ -359,7 +348,7 @@
 <!-- PRICING -->
 <div class="pricing-section">
   <div class="section-label" style="text-align:center">Precio</div>
-  <h2 class="section-title" style="margin:0 auto 0; text-align:center">Simple y transparente</h2>
+  <h2 class="pricing-title">Simple y transparente</h2>
   <div class="pricing-card">
     <div class="pricing-badge">✨ Plan Premium</div>
     <div class="price">$25</div>
@@ -372,7 +361,7 @@
       <li><span class="check">✓</span> Ethereum, Arbitrum, Polygon, BSC</li>
       <li><span class="check">✓</span> Análisis gratuito ilimitado</li>
     </ul>
-    <a href="/index.html#login" class="btn-primary" style="width:100%;display:block;text-align:center">Empezar Ahora</a>
+    <a href="/app.html#login" class="btn-primary" style="width:100%;display:block;text-align:center">Empezar Ahora</a>
   </div>
   <div class="disclaimer">
     ⚠️ <strong>Aviso importante:</strong> Este análisis es generado por IA y es un punto de partida profesional. Te recomendamos compilar en Remix IDE y probar en testnet antes de usar en mainnet. Tú tienes el control final.
