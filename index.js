@@ -90,7 +90,16 @@ app.post('/analizar-pago', async (req, res) => {
   try {
     const { codigo, accion, descripcion } = req.body;
 
-    const accionesValidas = ['generar', 'corregir', 'analizar'];
+    const accionesValidas = ["generar","corregir","analizar"];
+    const tokenHeader = req.headers["authorization"];
+    if (!tokenHeader) return res.status(401).json({ error: "No autorizado" });
+    const token = tokenHeader.split(" ")[1];
+    let userId;
+    try { const decoded = require("jsonwebtoken").verify(token, "secreto123"); userId = decoded.id; } catch { return res.status(401).json({ error: "Token invalido" }); }
+    const userResult = await pool.query("SELECT analisis_usados, plan FROM usuarios WHERE id=$1", [userId]);
+    const user = userResult.rows[0];
+    if (user.plan === "premium" && user.analisis_usados >= 29) return res.status(403).json({ error: "Limite de 29 analisis alcanzado. Renueva tu suscripcion." });
+    await pool.query("UPDATE usuarios SET analisis_usados = analisis_usados + 1 WHERE id=$1", [userId]);
     if (!accionesValidas.includes(accion)) {
       return res.status(400).json({ error: 'Accion invalida' });
     }
@@ -165,7 +174,7 @@ app.post('/crear-pago', async (req, res) => {
             name: 'CryptoLatino Analyzer - Plan Mensual',
             description: 'Análisis ilimitados por 30 días'
           },
-          unit_amount: 2900,
+          unit_amount: 2500,
           recurring: { interval: 'month' }
         },
         quantity: 1
