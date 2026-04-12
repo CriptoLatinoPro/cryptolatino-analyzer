@@ -193,7 +193,7 @@
       btn.disabled = false;
       btn.textContent = '⚡ ANALIZAR PREMIUM';
     }
-    function mostrarModal() {
+function mostrarModal() { document.getElementById("modalAuth").classList.remove("hidden"); }
   document.getElementById('modalAuth').classList.remove('hidden');
 }
 
@@ -216,7 +216,6 @@ async function autenticar() {
     document.getElementById("modalAuth").classList.add("hidden");
     document.getElementById("btnLogout").classList.remove("hidden");
     if (data.plan === 'premium') {
-      openTab(1);
     } else {
       document.getElementById('seccionPago').classList.remove('hidden');
     }
