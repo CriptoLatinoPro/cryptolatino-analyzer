@@ -5,7 +5,7 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const initDB = async () => { try { await pool.query("CREATE TABLE IF NOT EXISTS usuarios (id SERIAL PRIMARY KEY, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, plan VARCHAR(50) DEFAULT 'gratis', analisis_usados INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT NOW())"); console.log('DB lista'); } catch(e) { console.error(e); } };
+const initDB = async () => { try { await pool.query("CREATE TABLE IF NOT EXISTS usuarios (id SERIAL PRIMARY KEY, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, plan VARCHAR(50) DEFAULT 'gratis', analisis_usados INTEGER DEFAULT 0, fecha_reset TIMESTAMP DEFAULT NOW(), created_at TIMESTAMP DEFAULT NOW())"); console.log('DB lista'); } catch(e) { console.error(e); } };
 initDB();
 
 const app = express();
@@ -96,8 +96,9 @@ app.post('/analizar-pago', async (req, res) => {
     const token = tokenHeader.split(" ")[1];
     let userId;
     try { const decoded = require("jsonwebtoken").verify(token, process.env.JWT_SECRET); userId = decoded.id; } catch { return res.status(401).json({ error: "Token invalido" }); }
-    const userResult = await pool.query("SELECT analisis_usados, plan FROM usuarios WHERE id=$1", [userId]);
+    const userResult = await pool.query("SELECT analisis_usados, plan, fecha_reset FROM usuarios WHERE id=$1", [userId]);
     const user = userResult.rows[0];
+    const ahora = new Date(); const fechaReset = new Date(user.fecha_reset); const diffDias = (ahora - fechaReset) / (1000 * 60 * 60 * 24); if (diffDias >= 30) { await pool.query("UPDATE usuarios SET analisis_usados = 0, fecha_reset = NOW() WHERE id=$1", [userId]); user.analisis_usados = 0; }
     if (user.plan === "premium" && user.analisis_usados >= 29) return res.status(403).json({ error: "Limite de 29 analisis alcanzado. Renueva tu suscripcion." });
     await pool.query("UPDATE usuarios SET analisis_usados = analisis_usados + 1 WHERE id=$1", [userId]);
     if (!accionesValidas.includes(accion)) {
