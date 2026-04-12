@@ -136,7 +136,10 @@
         (a.explicacion3 ? '<div class="bg-slate-800 p-4 rounded-xl mb-3"><strong>Riesgos:</strong><br>' + a.explicacion3 + '</div>' : '') +
         (a.explicacion4 ? '<div class="bg-slate-800 p-4 rounded-xl mb-3"><strong>Recomendaciones:</strong><br>' + a.explicacion4 + '</div>' : '') +
         (a.codigo ? '<div class="bg-slate-800 p-4 rounded-xl"><strong>Código:</strong><pre class="mt-2 text-sm overflow-x-auto">' + a.codigo + '</pre></div>' : '');
-      div.scrollIntoView({ behavior: 'smooth' });
+      div.scrollIntoView({ behavior: "smooth" });
+      if (data.analisis) {
+        div.innerHTML += "<div class=\"bg-yellow-900 border border-yellow-500 p-4 rounded-xl mt-4 text-sm\"><strong>⚠️ Aviso Legal:</strong> Este análisis fue generado con IA. Te recomendamos compilarlo en Remix IDE y probarlo en testnet antes de usarlo en mainnet. Tú tienes el control final.</div>";
+      }
     }
 
     async function analizarGratis() {
