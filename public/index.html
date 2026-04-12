@@ -172,7 +172,7 @@
       try {
         const r = await fetch('/analizar-pago', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token')
           body: JSON.stringify({ codigo, accion: accionActual, descripcion })
         });
         const data = await r.json();
