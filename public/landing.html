@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CryptoLatino Analyzer — Analiza Smart Contracts en Español</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #F5C542;
+      --dark: #0A0A0F;
+      --card: #12121A;
+      --border: #2A2A3A;
+      --text: #E8E8F0;
+      --muted: #6B6B80;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(245,197,66,0.12) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -60%);
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(245,197,66,0.1);
+      border: 1px solid rgba(245,197,66,0.3);
+      color: var(--gold);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 2rem;
+      letter-spacing: 0.1em;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.05;
+      max-width: 800px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    h1 span {
+      color: var(--gold);
+      position: relative;
+    }
+
+    .subtitle {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--muted);
+      max-width: 520px;
+      margin: 1.5rem auto 2.5rem;
+      line-height: 1.7;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .cta-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #000;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 0.9rem 2.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(245,197,66,0.35);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 0.9rem 2.2rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s;
+    }
+
+    .btn-secondary:hover { border-color: var(--gold); }
+
+    /* STATS */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+      margin-top: 4rem;
+      animation: fadeUp 0.6s 0.4s ease both;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--gold);
+      font-family: 'Space Mono', monospace;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+
+    /* FEATURES */
+    .section {
+      padding: 5rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--gold);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      max-width: 600px;
+      margin-bottom: 3rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(245,197,66,0.3);
+      transform: translateY(-4px);
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.7rem;
+    }
+
+    .feature-desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    /* PRICING */
+    .pricing-section {
+      padding: 5rem 2rem;
+      text-align: center;
+      background: linear-gradient(180deg, transparent, rgba(245,197,66,0.03));
+    }
+
+    .pricing-card {
+      max-width: 420px;
+      margin: 3rem auto 0;
+      background: var(--card);
+      border: 1px solid var(--gold);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      position: relative;
+    }
+
+    .pricing-badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gold);
+      color: #000;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 0.3rem 1.2rem;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .price {
+      font-size: 4rem;
+      font-weight: 800;
+      color: var(--gold);
+      font-family: 'Space Mono', monospace;
+      line-height: 1;
+    }
+
+    .price-period {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    .price-features {
+      list-style: none;
+      margin: 2rem 0;
+      text-align: left;
+    }
+
+    .price-features li {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+
+    .price-features li:last-child { border-bottom: none; }
+
+    .check { color: var(--gold); font-weight: 700; }
+
+    /* DISCLAIMER */
+    .disclaimer {
+      background: rgba(245,197,66,0.05);
+      border: 1px solid rgba(245,197,66,0.15);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      max-width: 700px;
+      margin: 3rem auto 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="badge">🔐 Powered by Claude AI · En Español</div>
+  <h1>Analiza Smart Contracts<br>con <span>Inteligencia Artificial</span></h1>
+  <p class="subtitle">La única herramienta de análisis de contratos inteligentes diseñada para la comunidad latina. Detecta vulnerabilidades, corrige errores y genera contratos en segundos.</p>
+  <div class="cta-group">
+    <a href="/index.html" class="btn-primary">🚀 Empezar Ahora — $25/mes</a>
+    <a href="/index.html" class="btn-secondary">Ver Demo Gratis</a>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">4</div>
+      <div class="stat-label">Redes Soportadas</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">29</div>
+      <div class="stat-label">Análisis por Mes</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">En Español</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<div class="section">
+  <div class="section-label">¿Qué puedes hacer?</div>
+  <h2 class="section-title">Todo lo que necesitas para operar con seguridad</h2>
+  <div class="grid-3">
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <div class="feature-title">Análisis Gratuito</div>
+      <div class="feature-desc">Ingresa la dirección de cualquier contrato en Ethereum, Arbitrum, Polygon o BSC y obtén información básica al instante.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Análisis Premium con IA</div>
+      <div class="feature-desc">Claude AI analiza el código Solidity completo, detecta vulnerabilidades como reentrancy, honeypots y permisos peligrosos.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🛠️</div>
+      <div class="feature-title">Corregir y Generar</div>
+      <div class="feature-desc">¿Tienes un contrato con errores? Lo corregimos. ¿Necesitas uno nuevo? Lo generamos desde cero con tu descripción.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="pricing-section">
+  <div class="section-label" style="text-align:center">Precio</div>
+  <h2 class="section-title" style="margin:0 auto 0; text-align:center">Simple y transparente</h2>
+  <div class="pricing-card">
+    <div class="pricing-badge">✨ Plan Premium</div>
+    <div class="price">$25</div>
+    <div class="price-period">USD por mes · Cancela cuando quieras</div>
+    <ul class="price-features">
+      <li><span class="check">✓</span> 29 análisis premium por mes</li>
+      <li><span class="check">✓</span> Análisis completo con IA en español</li>
+      <li><span class="check">✓</span> Corrección de contratos Solidity</li>
+      <li><span class="check">✓</span> Generación de contratos desde cero</li>
+      <li><span class="check">✓</span> Ethereum, Arbitrum, Polygon, BSC</li>
+      <li><span class="check">✓</span> Análisis gratuito ilimitado</li>
+    </ul>
+    <a href="/index.html" class="btn-primary" style="width:100%;display:block;text-align:center">Empezar Ahora</a>
+  </div>
+  <div class="disclaimer">
+    ⚠️ <strong>Aviso importante:</strong> Este análisis es generado por IA y es un punto de partida profesional. Te recomendamos compilar en Remix IDE y probar en testnet antes de usar en mainnet. Tú tienes el control final.
+  </div>
+</div>
+
+<footer>
+  © 2026 CryptoLatino Pro · Hecho para la comunidad latina 🌎
+</footer>
+
+</body>
+</html>
