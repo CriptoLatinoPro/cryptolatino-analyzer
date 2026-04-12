@@ -95,7 +95,7 @@ app.post('/analizar-pago', async (req, res) => {
     if (!tokenHeader) return res.status(401).json({ error: "No autorizado" });
     const token = tokenHeader.split(" ")[1];
     let userId;
-    try { const decoded = require("jsonwebtoken").verify(token, "secreto123"); userId = decoded.id; } catch { return res.status(401).json({ error: "Token invalido" }); }
+    try { const decoded = require("jsonwebtoken").verify(token, process.env.JWT_SECRET); userId = decoded.id; } catch { return res.status(401).json({ error: "Token invalido" }); }
     const userResult = await pool.query("SELECT analisis_usados, plan FROM usuarios WHERE id=$1", [userId]);
     const user = userResult.rows[0];
     if (user.plan === "premium" && user.analisis_usados >= 29) return res.status(403).json({ error: "Limite de 29 analisis alcanzado. Renueva tu suscripcion." });
@@ -209,7 +209,7 @@ app.post('/login', async (req, res) => {
     const usuario = result.rows[0];
     const valido = await bcrypt.compare(password, usuario.password);
     if (!valido) return res.status(401).json({ error: 'Contraseña incorrecta' });
-    const token = jwt.sign({ id: usuario.id, plan: usuario.plan }, 'secreto123', { expiresIn: '30d' });
+    const token = jwt.sign({ id: usuario.id, plan: usuario.plan }, process.env.JWT_SECRET, { expiresIn: '30d' });
     res.json({ ok: true, token, plan: usuario.plan });
   } catch (err) {
     res.status(500).json({ error: 'Error del servidor' });
