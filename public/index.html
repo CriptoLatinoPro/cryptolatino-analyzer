@@ -91,7 +91,7 @@
     let accionActual = "analizar";
     const tokenGuardado = localStorage.getItem("token");
     const planGuardado = localStorage.getItem("plan");
-    if (window.location.hash === "#login") mostrarModal();
+    if (window.location.hash === "#login") setTimeout(mostrarModal, 300);
     if (tokenGuardado) {
       document.getElementById("btnLogout").classList.remove("hidden");
       if (planGuardado === "premium") openTab(1);
