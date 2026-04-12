@@ -89,6 +89,12 @@
 
   <script>
     let accionActual = "analizar";
+    const tokenGuardado = localStorage.getItem("token");
+    const planGuardado = localStorage.getItem("plan");
+    if (tokenGuardado) {
+      document.getElementById("btnLogout").classList.remove("hidden");
+      if (planGuardado === "premium") openTab(1);
+    }
 
     function logout() {
       localStorage.removeItem("token");
