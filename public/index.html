@@ -22,7 +22,7 @@
     <p id="authError" class="text-red-400 mt-3 text-center hidden"></p>
     <div id="seccionPago" class="hidden mt-4">
       <p class="text-center mb-3 text-yellow-400">¿Listo para el plan Premium?</p>
-      <button onclick="irAPagar()" class="w-full bg-green-500 text-black py-3 rounded font-bold">💳 Suscribirse $29/mes</button>
+      <button onclick="irAPagar()" class="w-full bg-green-500 text-black py-3 rounded font-bold">💳 Suscribirse $25/mes</button>
       <p class="text-xs text-center mt-2 text-slate-400">No solo generates tu contrato — tienes 1 mes para corregirlo, mejorarlo y perfeccionarlo hasta que funcione en Remix.</p>
     </div>
   </div>
@@ -31,7 +31,8 @@
   <div class="max-w-2xl mx-auto">
     <div class="text-center mb-8">
       <h1 class="text-3xl font-bold">🔐 Analizador de Smart Contracts</h1>
-      <p class="text-yellow-400 mt-2">Con Inteligencia Artificial — en Español</p>
+      <button id="btnLogout" onclick="logout()" class="hidden absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded text-sm">Cerrar Sesión</button>
+    <p class="text-yellow-400 mt-2">Con Inteligencia Artificial — en Español</p>
     </div>
 
     <!-- TABS -->
@@ -87,7 +88,14 @@
   </div>
 
   <script>
-    let accionActual = 'analizar';
+    let accionActual = "analizar";
+
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("plan");
+      document.getElementById("btnLogout").classList.add("hidden");
+      location.reload();
+    }
 
     function openTab(n) {
       document.querySelectorAll('.tab-content').forEach((c, i) => {
@@ -195,7 +203,8 @@ async function autenticar() {
     if (data.token) {
     localStorage.setItem('token', data.token);
     localStorage.setItem('plan', data.plan);
-    document.getElementById('modalAuth').classList.add('hidden');
+    document.getElementById("modalAuth").classList.add("hidden");
+    document.getElementById("btnLogout").classList.remove("hidden");
     if (data.plan === 'premium') {
       openTab(1);
     } else {
