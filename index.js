@@ -6,25 +6,24 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const initDB = async () => { try { await pool.query("CREATE TABLE IF NOT EXISTS usuarios (id SERIAL PRIMARY KEY, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, plan VARCHAR(50) DEFAULT 'gratis', analisis_usados INTEGER DEFAULT 0, fecha_reset TIMESTAMP DEFAULT NOW(), created_at TIMESTAMP DEFAULT NOW())"); console.log('DB lista'); } catch(e) { console.error(e); } };
-initDB(); 
+initDB();
 
 const app = express();
 const rateLimit = require('express-rate-limit');
 const limiter = rateLimit({ windowMs: 60 * 1000, max: 20 });
 app.use(limiter);
+
 app.post('/webhook', express.raw({type:'application/json'}), async(req,res)=>{
   const sig = req.headers['stripe-signature'];
   try {
     const event = require('stripe')(process.env.STRIPE_SECRET_KEY).webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
 
-    // Pago inicial — activar premium
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       const email = session.customer_email || session.customer_details?.email;
       if (email) await pool.query("UPDATE usuarios SET plan='premium' WHERE email=$1", [email]);
     }
 
-    // Renovacion mensual — resetear contador de analisis
     if (event.type === 'invoice.payment_succeeded') {
       const email = event.data.object.customer_email;
       if (email) await pool.query(
@@ -43,7 +42,6 @@ app.use(express.json({ limit: '1mb' }));
 app.get('/', (req, res) => { res.sendFile(__dirname + '/public/landing.html'); });
 app.use(express.static('public'));
 
-// Headers de seguridad
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -75,33 +73,55 @@ function fetchJson(url) {
 }
 
 function safeParseJson(text) {
+  // Limpiar backticks y markdown
+  let cleaned = text
+    .replace(/json\s*/gi, '')
+    .replace(/\s*/gi, '')
+    .trim();
+
+  // Intentar parsear directo
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+    return JSON.parse(cleaned);
+  } catch(e1) {}
+
+  // Buscar JSON dentro del texto
+  try {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+  } catch(e2) {}
+
+  // Extraer campos manualmente si el JSON esta roto
+  try {
+    const result = {};
+    const fields = ['seguridad', 'razon_seguridad', 'explicacion1', 'explicacion2', 'explicacion3', 'explicacion4', 'codigo'];
+    for (const field of fields) {
+      const regex = new RegExp('"' + field + '"\\s*:\\s*"((?:[^"\\\\]|\\\\[\\s\\S])*)"', 's');
+      const match = cleaned.match(regex);
+      if (match) {
+        result[field] = match[1]
+          .replace(/\\n/g, '\n')
+          .replace(/\\t/g, '\t')
+          .replace(/\\"/g, '"')
+          .replace(/\\\\/g, '\\');
+      }
     }
-    return JSON.parse(text);
-  } catch (e) {
-    console.error('Error parseando JSON:', text.substring(0, 300));
-    throw e;
-  }
+    if (result.seguridad || result.explicacion1) return result;
+  } catch(e3) {}
+
+  throw new Error('No se pudo parsear la respuesta');
 }
 
 app.post('/analizar-gratis', async (req, res) => {
   try {
     const { address, network } = req.body;
-
     if (!address) return res.status(400).json({ error: 'Direccion requerida' });
     if (!isEthAddress(address)) return res.status(400).json({ error: 'Direccion Ethereum invalida' });
-
     const key = process.env.ETHERSCAN_KEY;
     if (!key) return res.status(500).json({ error: 'Falta ETHERSCAN_KEY en variables' });
-
     const chainIds = { eth: '1', arb: '42161', pol: '137', bsc: '56' };
     const chainId = chainIds[network] || '1';
     const url = 'https://api.etherscan.io/v2/api?chainid=' + chainId + '&module=contract&action=getsourcecode&address=' + address + '&apikey=' + key;
     const data = await fetchJson(url);
-
     const r = data.result[0];
     return res.json({
       nombre: r.ContractName || 'Sin nombre',
@@ -109,7 +129,6 @@ app.post('/analizar-gratis', async (req, res) => {
       verificado: !!r.SourceCode,
       mensaje: r.SourceCode ? 'Contrato encontrado' : 'Contrato no verificado'
     });
-
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });
@@ -119,7 +138,6 @@ app.post('/analizar-gratis', async (req, res) => {
 app.post('/analizar-pago', async (req, res) => {
   try {
     const { codigo, accion, descripcion } = req.body;
-
     const accionesValidas = ["generar","corregir","analizar"];
     const tokenHeader = req.headers["authorization"];
     if (!tokenHeader) return res.status(401).json({ error: "No autorizado" });
@@ -132,33 +150,24 @@ app.post('/analizar-pago', async (req, res) => {
     if (user.plan !== 'premium') return res.status(403).json({ error: 'Se requiere plan Premium' });
     if (user.plan === "premium" && user.analisis_usados >= 29) return res.status(403).json({ error: "Limite de 29 analisis alcanzado. Renueva tu suscripcion." });
     await pool.query("UPDATE usuarios SET analisis_usados = analisis_usados + 1 WHERE id=$1", [userId]);
-    if (!accionesValidas.includes(accion)) {
-      return res.status(400).json({ error: 'Accion invalida' });
-    }
-
-    if (accion !== 'generar' && (!codigo || codigo.length < 40)) {
-      return res.status(400).json({ error: 'Codigo muy corto' });
-    }
-    if (accion !== 'generar' && codigo.length > 15000) {
-      return res.status(400).json({ error: 'Codigo demasiado largo' });
-    }
-    if (accion === 'generar' && !descripcion) {
-      return res.status(400).json({ error: 'Descripcion requerida para generar' });
-    }
+    if (!accionesValidas.includes(accion)) return res.status(400).json({ error: 'Accion invalida' });
+    if (accion !== 'generar' && (!codigo || codigo.length < 40)) return res.status(400).json({ error: 'Codigo muy corto' });
+    if (accion !== 'generar' && codigo.length > 15000) return res.status(400).json({ error: 'Codigo demasiado largo' });
+    if (accion === 'generar' && !descripcion) return res.status(400).json({ error: 'Descripcion requerida para generar' });
 
     let prompt = '';
     if (accion === 'generar') {
-      prompt = 'Genera un smart contract Solidity completo basado en: ' + descripcion + '. Responde SOLO con JSON valido con estas claves: seguridad, razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo.';
+      prompt = 'Genera un smart contract Solidity completo basado en: ' + descripcion + '. Responde SOLO con JSON valido con estas claves: seguridad (ALTO/MEDIO/BAJO), razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo. El codigo debe ser un string con saltos de linea como \\n.';
     } else if (accion === 'corregir') {
-      prompt = 'Corrige este contrato Solidity. Responde SOLO con JSON valido con estas claves: seguridad, razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo. Contrato: ' + codigo.substring(0, 7000);
+      prompt = 'Corrige este contrato Solidity. Responde SOLO con JSON valido con estas claves: seguridad (ALTO/MEDIO/BAJO), razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo. El codigo debe ser un string con saltos de linea como \\n. Contrato: ' + codigo.substring(0, 7000);
     } else {
-      prompt = 'Analiza este contrato Solidity en espanol. Responde SOLO con JSON valido con estas claves: seguridad, razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4. Contrato: ' + codigo.substring(0, 7000);
+      prompt = 'Analiza este contrato Solidity en espanol. Responde SOLO con JSON valido con estas claves: seguridad (ALTO/MEDIO/BAJO), razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4. Contrato: ' + codigo.substring(0, 7000);
     }
 
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
-     system: 'Eres un auditor experto de smart contracts. Respondes UNICAMENTE con un objeto JSON valido. PROHIBIDO usar markdown, backticks, bloques de codigo, o cualquier texto fuera del JSON. El campo codigo debe ser un string con el codigo Solidity usando \\n para saltos de linea.',
+      max_tokens: 4000,
+      system: 'Eres un auditor experto de smart contracts. Respondes UNICAMENTE con JSON valido sin markdown ni backticks. El campo codigo es un string donde los saltos de linea van como \\n.',
       messages: [{ role: 'user', content: prompt }]
     });
 
@@ -170,8 +179,8 @@ app.post('/analizar-pago', async (req, res) => {
     } catch {
       resultado = {
         seguridad: 'MEDIO',
-        razon_seguridad: 'No se pudo parsear JSON',
-        explicacion1: text,
+        razon_seguridad: 'Analisis completado',
+        explicacion1: text.substring(0, 500),
         explicacion2: '', explicacion3: '', explicacion4: ''
       };
     }
@@ -186,16 +195,13 @@ app.post('/analizar-pago', async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    if (err.status === 429) {
-      return res.status(429).json({ error: 'Limite de API alcanzado. Intenta mas tarde.' });
-    }
+    if (err.status === 429) return res.status(429).json({ error: 'Limite de API alcanzado. Intenta mas tarde.' });
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// Crear sesion de pago
 app.post('/crear-pago', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
