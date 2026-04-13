@@ -75,8 +75,9 @@ function fetchJson(url) {
 function safeParseJson(text) {
   // Limpiar backticks y markdown
   let cleaned = text
-    .replace(/json\s*/gi, '')
-    .replace(/\s*/gi, '')
+    .replace(/^json\s*/i, '')
+    .replace(/^\s*/i, '')
+    .replace(/```\s*$/i, '')
     .trim();
 
   // Intentar parsear directo
