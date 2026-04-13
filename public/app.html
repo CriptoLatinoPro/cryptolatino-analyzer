@@ -51,8 +51,8 @@
         <select id="red" class="w-full bg-slate-800 rounded-xl p-3 mb-6 text-white">
           <option value="eth">Ethereum</option>
           <option value="bsc">BSC</option>
-        <option value="arb">Arbitrum</option>
-        <option value="pol">Polygon</option>
+          <option value="arb">Arbitrum</option>
+          <option value="pol">Polygon</option>
         </select>
         <button id="btnGratis" onclick="analizarGratis()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl text-lg">
           🔍 ANALIZAR CON IA
@@ -84,7 +84,7 @@
     </div>
 
     <!-- RESULTADO -->
-    <div id="resultado" class="hidden mt-6 bg-slate-900 p-6 rounded-2xl"></div>
+    <div id="resultado" class="hidden mt-6 space-y-4"></div>
   </div>
 
   <script>
@@ -124,29 +124,74 @@
       document.getElementById('inputDescripcion').classList.toggle('hidden', a !== 'generar');
     }
 
+    function copiarCodigo(codigo) {
+      navigator.clipboard.writeText(codigo).then(() => {
+        const btn = document.getElementById('btnCopiar');
+        btn.textContent = '✅ Copiado!';
+        btn.classList.replace('bg-green-600', 'bg-green-400');
+        setTimeout(() => {
+          btn.textContent = '📋 Copiar Código';
+          btn.classList.replace('bg-green-400', 'bg-green-600');
+        }, 2000);
+      });
+    }
+
     function mostrarResultado(data) {
       const div = document.getElementById('resultado');
       div.classList.remove('hidden');
+      div.innerHTML = '';
+
       if (data.error) {
-        div.innerHTML = '<p class="text-red-400 font-bold">Error: ' + data.error + '</p>';
+        div.innerHTML = '<div class="bg-slate-900 p-6 rounded-2xl"><p class="text-red-400 font-bold">Error: ' + data.error + '</p></div>';
         return;
       }
+
       const a = data.analisis || {};
       const color = a.seguridad === 'ALTO' ? 'green' : a.seguridad === 'MEDIO' ? 'yellow' : 'red';
-      div.innerHTML =
-        '<h3 class="text-xl font-bold mb-2">' + (data.nombre || '') + '</h3>' +
-        '<p class="text-gray-400 mb-4">' + (data.compilador ? 'Compilador: ' + data.compilador : '') + '</p>' +
-        '<p class="text-green-400 mb-4">' + (data.mensaje || '') + '</p>' +
-        (a.seguridad ? '<div class="bg-slate-800 p-4 rounded-xl mb-4"><span class="font-bold text-' + color + '-400">Seguridad: ' + a.seguridad + '</span><p class="mt-2">' + (a.razon_seguridad || '') + '</p></div>' : '') +
-        (a.explicacion1 ? '<div class="bg-slate-800 p-4 rounded-xl mb-3"><strong>Qué hace:</strong><br>' + a.explicacion1 + '</div>' : '') +
-        (a.explicacion2 ? '<div class="bg-slate-800 p-4 rounded-xl mb-3"><strong>Funciones:</strong><br>' + a.explicacion2 + '</div>' : '') +
-        (a.explicacion3 ? '<div class="bg-slate-800 p-4 rounded-xl mb-3"><strong>Riesgos:</strong><br>' + a.explicacion3 + '</div>' : '') +
-        (a.explicacion4 ? '<div class="bg-slate-800 p-4 rounded-xl mb-3"><strong>Recomendaciones:</strong><br>' + a.explicacion4 + '</div>' : '') +
-        (a.codigo ? '<div class="bg-slate-800 p-4 rounded-xl"><strong>Código:</strong><pre class="mt-2 text-sm overflow-x-auto">' + a.codigo + '</pre></div>' : '');
-      div.scrollIntoView({ behavior: "smooth" });
-      if (data.analisis) {
-        div.innerHTML += "<div class=\"bg-yellow-900 border border-yellow-500 p-4 rounded-xl mt-4 text-sm\"><strong>⚠️ Aviso Legal:</strong> Este análisis fue generado con IA. Te recomendamos compilarlo en Remix IDE y probarlo en testnet antes de usarlo en mainnet. Tú tienes el control final.</div>";
+
+      // SECCION 1 — Analisis
+      let analisisHTML = '<div class="bg-slate-900 p-6 rounded-2xl">';
+      analisisHTML += '<h3 class="text-xl font-bold mb-4">📊 Resultado del Análisis</h3>';
+
+      if (a.seguridad) {
+        analisisHTML += '<div class="bg-slate-800 p-4 rounded-xl mb-4"><span class="font-bold text-' + color + '-400 text-lg">🔒 Seguridad: ' + a.seguridad + '</span><p class="mt-2 text-slate-300">' + (a.razon_seguridad || '') + '</p></div>';
       }
+      if (a.explicacion1) {
+        analisisHTML += '<div class="bg-slate-800 p-4 rounded-xl mb-3"><p class="font-bold text-yellow-400 mb-1">📌 Qué hace:</p><p class="text-slate-300">' + a.explicacion1 + '</p></div>';
+      }
+      if (a.explicacion2) {
+        analisisHTML += '<div class="bg-slate-800 p-4 rounded-xl mb-3"><p class="font-bold text-yellow-400 mb-1">⚙️ Funciones:</p><p class="text-slate-300">' + a.explicacion2 + '</p></div>';
+      }
+      if (a.explicacion3) {
+        analisisHTML += '<div class="bg-slate-800 p-4 rounded-xl mb-3"><p class="font-bold text-yellow-400 mb-1">⚠️ Riesgos:</p><p class="text-slate-300">' + a.explicacion3 + '</p></div>';
+      }
+      if (a.explicacion4) {
+        analisisHTML += '<div class="bg-slate-800 p-4 rounded-xl mb-3"><p class="font-bold text-yellow-400 mb-1">✅ Recomendaciones:</p><p class="text-slate-300">' + a.explicacion4 + '</p></div>';
+      }
+
+      analisisHTML += '</div>';
+      div.innerHTML += analisisHTML;
+
+      // SECCION 2 — Codigo Solidity separado
+      if (a.codigo) {
+        const codigoLimpio = a.codigo.replace(/`/g, '');
+        const codigoHTML = '<div class="bg-slate-900 p-6 rounded-2xl border border-purple-500">' +
+          '<div class="flex items-center justify-between mb-4">' +
+          '<h3 class="text-xl font-bold text-purple-400">📄 Contrato Solidity</h3>' +
+          '<button id="btnCopiar" onclick="copiarCodigo(' + codigoLimpio.replace(//g, '\\') + ')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm">📋 Copiar Código</button>' +
+          '</div>' +
+          '<pre class="bg-slate-800 p-4 rounded-xl text-sm overflow-x-auto text-green-300 font-mono leading-relaxed">' + codigoLimpio + '</pre>' +
+          '<p class="text-slate-400 text-xs mt-3">💡 Copia este código y pégalo en <strong>remix.ethereum.org</strong> para compilarlo y desplegarlo.</p>' +
+          '</div>';
+        div.innerHTML += codigoHTML;
+      }
+
+      // Aviso legal
+      if (data.analisis) {
+        div.innerHTML += '<div class="bg-yellow-900 border border-yellow-500 p-4 rounded-xl text-sm"><strong>⚠️ Aviso Legal:</strong> Este análisis fue generado con IA. Te recomendamos compilarlo en Remix IDE y probarlo en testnet antes de usarlo en mainnet. Tú tienes el control final.</div>';
+      }
+
+      div.scrollIntoView({ behavior: "smooth" });
     }
 
     async function analizarGratis() {
@@ -193,47 +238,48 @@
       btn.disabled = false;
       btn.textContent = '⚡ ANALIZAR PREMIUM';
     }
+
     function mostrarModal() {
-  document.getElementById('modalAuth').classList.remove('hidden');
-}
-
-function mostrarTab(tab) {
-  document.getElementById('tabLogin').className = tab === 'login' ? 'flex-1 bg-yellow-500 text-black py-2 rounded font-bold' : 'flex-1 bg-slate-600 py-2 rounded font-bold';
-  document.getElementById('tabRegistro').className = tab === 'registro' ? 'flex-1 bg-yellow-500 text-black py-2 rounded font-bold' : 'flex-1 bg-slate-600 py-2 rounded font-bold';
-}
-
-async function autenticar() {
-  const email = document.getElementById('authEmail').value;
-  const password = document.getElementById('authPassword').value;
-  const esRegistro = document.getElementById('tabRegistro').className.includes('yellow');
-  const url = esRegistro ? '/registro' : '/login';
-  const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) });
-  const data = await r.json();
-  
-    if (data.token) {
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('plan', data.plan);
-    document.getElementById("modalAuth").classList.add("hidden");
-    document.getElementById("btnLogout").classList.remove("hidden");
-    if (data.plan === 'premium') {
-      openTab(1);
-    } else {
-      document.getElementById('seccionPago').classList.remove('hidden');
+      document.getElementById('modalAuth').classList.remove('hidden');
     }
-  } else if (data.ok) {
-    document.getElementById('seccionPago').classList.remove('hidden');
-  } else {
-    const err = document.getElementById('authError');
-    err.textContent = data.error;
-    err.classList.remove('hidden');
-  }
-}
 
-async function irAPagar() {
-  const r = await fetch('/crear-pago', { method: 'POST', headers: {'Content-Type':'application/json'} });
-  const data = await r.json();
-  if (data.url) window.location.href = data.url;
-}
+    function mostrarTab(tab) {
+      document.getElementById('tabLogin').className = tab === 'login' ? 'flex-1 bg-yellow-500 text-black py-2 rounded font-bold' : 'flex-1 bg-slate-600 py-2 rounded font-bold';
+      document.getElementById('tabRegistro').className = tab === 'registro' ? 'flex-1 bg-yellow-500 text-black py-2 rounded font-bold' : 'flex-1 bg-slate-600 py-2 rounded font-bold';
+    }
+
+    async function autenticar() {
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      const esRegistro = document.getElementById('tabRegistro').className.includes('yellow');
+      const url = esRegistro ? '/registro' : '/login';
+      const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) });
+      const data = await r.json();
+      
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('plan', data.plan);
+        document.getElementById("modalAuth").classList.add("hidden");
+        document.getElementById("btnLogout").classList.remove("hidden");
+        if (data.plan === 'premium') {
+          openTab(1);
+        } else {
+          document.getElementById('seccionPago').classList.remove('hidden');
+        }
+      } else if (data.ok) {
+        document.getElementById('seccionPago').classList.remove('hidden');
+      } else {
+        const err = document.getElementById('authError');
+        err.textContent = data.error;
+        err.classList.remove('hidden');
+      }
+    }
+
+    async function irAPagar() {
+      const r = await fetch('/crear-pago', { method: 'POST', headers: {'Content-Type':'application/json'} });
+      const data = await r.json();
+      if (data.url) window.location.href = data.url;
+    }
   </script>
 </body>
 </html>
