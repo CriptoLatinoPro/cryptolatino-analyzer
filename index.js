@@ -9,7 +9,34 @@ const initDB = async () => { try { await pool.query("CREATE TABLE IF NOT EXISTS 
 initDB();
 
 const app = express();
-app.post('/webhook', express.raw({type:'application/json'}), async(req,res)=>{ const sig=req.headers['stripe-signature']; try{ const event=require('stripe')(process.env.STRIPE_SECRET_KEY).webhooks.constructEvent(req.body,sig,process.env.STRIPE_WEBHOOK_SECRET); if(event.type==='checkout.session.completed'){const session=event.data.object; const email=session.customer_email||session.customer_details?.email; if(email) await pool.query("UPDATE usuarios SET plan='premium' WHERE email=$1",[email]);} res.json({received:true}); }catch(err){res.status(400).send('Error');} });
+
+app.post('/webhook', express.raw({type:'application/json'}), async(req,res)=>{
+  const sig = req.headers['stripe-signature'];
+  try {
+    const event = require('stripe')(process.env.STRIPE_SECRET_KEY).webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+
+    // Pago inicial — activar premium
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const email = session.customer_email || session.customer_details?.email;
+      if (email) await pool.query("UPDATE usuarios SET plan='premium' WHERE email=$1", [email]);
+    }
+
+    // Renovacion mensual — resetear contador de analisis
+    if (event.type === 'invoice.payment_succeeded') {
+      const email = event.data.object.customer_email;
+      if (email) await pool.query(
+        "UPDATE usuarios SET analisis_usados = 0, fecha_reset = NOW() WHERE email=$1",
+        [email]
+      );
+    }
+
+    res.json({ received: true });
+  } catch(err) {
+    res.status(400).send('Error');
+  }
+});
+
 app.use(express.json({ limit: '1mb' }));
 app.get('/', (req, res) => { res.sendFile(__dirname + '/public/landing.html'); });
 app.use(express.static('public'));
@@ -60,7 +87,7 @@ function safeParseJson(text) {
 
 app.post('/analizar-gratis', async (req, res) => {
   try {
-    const { address,network } = req.body;
+    const { address, network } = req.body;
 
     if (!address) return res.status(400).json({ error: 'Direccion requerida' });
     if (!isEthAddress(address)) return res.status(400).json({ error: 'Direccion Ethereum invalida' });
@@ -162,9 +189,10 @@ app.post('/analizar-pago', async (req, res) => {
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// Crear sesión de pago
+// Crear sesion de pago
 app.post('/crear-pago', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
@@ -174,7 +202,7 @@ app.post('/crear-pago', async (req, res) => {
           currency: 'usd',
           product_data: {
             name: 'CryptoLatino Analyzer - Plan Mensual',
-            description: 'Análisis ilimitados por 30 días'
+            description: 'Analisis ilimitados por 30 dias'
           },
           unit_amount: 2500,
           recurring: { interval: 'month' }
@@ -210,13 +238,14 @@ app.post('/login', async (req, res) => {
     if (!result.rows.length) return res.status(401).json({ error: 'Usuario no encontrado' });
     const usuario = result.rows[0];
     const valido = await bcrypt.compare(password, usuario.password);
-    if (!valido) return res.status(401).json({ error: 'Contraseña incorrecta' });
+    if (!valido) return res.status(401).json({ error: 'Contrasena incorrecta' });
     const token = jwt.sign({ id: usuario.id, plan: usuario.plan }, process.env.JWT_SECRET, { expiresIn: '30d' });
     res.json({ ok: true, token, plan: usuario.plan });
   } catch (err) {
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
+
 app.get('/success', (req, res) => {
   res.sendFile(__dirname + '/public/success.html');
 });
@@ -224,4 +253,5 @@ app.get('/success', (req, res) => {
 app.get('/cancel', (req, res) => {
   res.sendFile(__dirname + '/public/cancel.html');
 });
+
 app.listen(3000, () => console.log('Servidor en puerto 3000'));
