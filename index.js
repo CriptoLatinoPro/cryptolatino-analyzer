@@ -4,15 +4,14 @@ const https = require('https');
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const initDB = async () => { try { await pool.query("CREATE TABLE IF NOT EXISTS usuarios (id SERIAL PRIMARY KEY, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, plan VARCHAR(50) DEFAULT 'gratis', analisis_usados INTEGER DEFAULT 0, fecha_reset TIMESTAMP DEFAULT NOW(), created_at TIMESTAMP DEFAULT NOW())"); console.log('DB lista'); } catch(e) { console.error(e); } };
+initDB(); 
+
+const app = express();
 const rateLimit = require('express-rate-limit');
 const limiter = rateLimit({ windowMs: 60 * 1000, max: 20 });
 app.use(limiter);
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const initDB = async () => { try { await pool.query("CREATE TABLE IF NOT EXISTS usuarios (id SERIAL PRIMARY KEY, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, plan VARCHAR(50) DEFAULT 'gratis', analisis_usados INTEGER DEFAULT 0, fecha_reset TIMESTAMP DEFAULT NOW(), created_at TIMESTAMP DEFAULT NOW())"); console.log('DB lista'); } catch(e) { console.error(e); } };
-initDB();
-
-const app = express();
-
 app.post('/webhook', express.raw({type:'application/json'}), async(req,res)=>{
   const sig = req.headers['stripe-signature'];
   try {
