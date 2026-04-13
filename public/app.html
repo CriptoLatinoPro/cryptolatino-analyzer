@@ -124,17 +124,13 @@
       document.getElementById('inputDescripcion').classList.toggle('hidden', a !== 'generar');
     }
 
-    function copiarCodigo(codigo) {
-      navigator.clipboard.writeText(codigo).then(() => {
-        const btn = document.getElementById('btnCopiar');
-        btn.textContent = '✅ Copiado!';
-        btn.classList.replace('bg-green-600', 'bg-green-400');
-        setTimeout(() => {
-          btn.textContent = '📋 Copiar Código';
-          btn.classList.replace('bg-green-400', 'bg-green-600');
-        }, 2000);
-      });
-    }
+    function copiarCodigo(btn) {
+  const codigo = document.getElementById('precodigo').textContent;
+  navigator.clipboard.writeText(codigo).then(() => {
+    btn.textContent = '✅ Copiado!';
+    setTimeout(() => { btn.textContent = '📋 Copiar Código'; }, 2000);
+  });
+}
 
     function mostrarResultado(data) {
       const div = document.getElementById('resultado');
@@ -175,14 +171,14 @@
       // SECCION 2 — Codigo Solidity separado
       if (a.codigo) {
         const codigoLimpio = a.codigo.replace(/`/g, '');
-        const codigoHTML = '<div class="bg-slate-900 p-6 rounded-2xl border border-purple-500">' +
-          '<div class="flex items-center justify-between mb-4">' +
-          '<h3 class="text-xl font-bold text-purple-400">📄 Contrato Solidity</h3>' +
-          '<button id="btnCopiar" onclick="copiarCodigo(' + codigoLimpio.replace(//g, '\\') + ')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm">📋 Copiar Código</button>' +
-          '</div>' +
-          '<pre class="bg-slate-800 p-4 rounded-xl text-sm overflow-x-auto text-green-300 font-mono leading-relaxed">' + codigoLimpio + '</pre>' +
-          '<p class="text-slate-400 text-xs mt-3">💡 Copia este código y pégalo en <strong>remix.ethereum.org</strong> para compilarlo y desplegarlo.</p>' +
-          '</div>';
+       const codigoHTML = '<div class="bg-slate-900 p-6 rounded-2xl border border-purple-500">' +
+  '<div class="flex items-center justify-between mb-4">' +
+  '<h3 class="text-xl font-bold text-purple-400">📄 Contrato Solidity</h3>' +
+  '<button id="btnCopiar" onclick="copiarCodigo(this)" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm">📋 Copiar Código</button>' +
+  '</div>' +
+  '<pre id="precodigo" class="bg-slate-800 p-4 rounded-xl text-sm overflow-x-auto text-green-300 font-mono leading-relaxed">' + codigoLimpio + '</pre>' +
+  '<p class="text-slate-400 text-xs mt-3">💡 Copia este código y pégalo en <strong>remix.ethereum.org</strong></p>' +
+  '</div>';
         div.innerHTML += codigoHTML;
       }
 
