@@ -167,18 +167,8 @@ app.post('/analizar-pago', async (req, res) => {
 
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 7000,
-      system: `Eres un Smart Contract Auditor Senior con +10 anos de experiencia en CertiK y PeckShield. Has auditado protocolos DeFi con miles de millones en TVL.
-
-REGLAS ABSOLUTAS:
-- Responde UNICAMENTE con JSON valido. Cero texto fuera del JSON.
-- Analiza SOLO el codigo proporcionado. NUNCA supongas funciones que no existen.
-- Si algo no es verificable escribe NO VERIFICABLE — NUNCA inventes datos.
-- Usa Solidity ^0.8.22 en codigo generado.
-- Se brutalmente honesto — este analisis protege dinero real de usuarios latinos.
-- Comentarios del codigo siempre en espanol.
-- NUNCA generes codigo con vulnerabilidades conocidas.
-- El campo codigo usa \\n para saltos de linea.`,
+      max_tokens: 4000,
+      system: 'Eres un auditor experto de smart contracts. Respondes UNICAMENTE con JSON valido sin markdown ni backticks. El campo codigo es un string donde los saltos de linea van como \\n.',
       messages: [{ role: 'user', content: prompt }]
     });
 
