@@ -158,27 +158,17 @@ app.post('/analizar-pago', async (req, res) => {
 
     let prompt = '';
     if (accion === 'generar') {
-      prompt = Genera un smart contract Solidity profesional y seguro basado en: ${descripcion}.\n\nREQUISITOS:\n- Solidity ^0.8.22\n- OpenZeppelin cuando aplique\n- ReentrancyGuard en funciones criticas\n- Eventos para acciones importantes\n- Comentarios en espanol\n- Gas optimization\n\nResponde SOLO con este JSON:\n{"seguridad":"ALTO|MEDIO|BAJO","razon_seguridad":"explicacion","explicacion1":"que hace el contrato","explicacion2":"funciones principales","explicacion3":"medidas de seguridad","explicacion4":"como desplegarlo en Remix","codigo":"CONTRATO COMPLETO con \\n"}; Responde SOLO con JSON valido con estas claves: seguridad (ALTO/MEDIO/BAJO), razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo. El codigo debe ser un string con saltos de linea como \\n.';
+      prompt = 'Genera un smart contract Solidity completo basado en: ' + descripcion + '. Responde SOLO con JSON valido con estas claves: seguridad (ALTO/MEDIO/BAJO), razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo. El codigo debe ser un string con saltos de linea como \\n.';
     } else if (accion === 'corregir') {
-      prompt = Corrige y mejora este contrato Solidity con estandares CertiK.\n\nPASO 1 - DIAGNOSTICO: Identifica todos los problemas.\nPASO 2 - CORRECCION: Corrige cada problema.\nPASO 3 - OPTIMIZACION: Mejora gas efficiency.\nPASO 4 - VERIFICACION: Confirma que es seguro.\n\nResponde SOLO con este JSON:\n{"seguridad":"ALTO|MEDIO|BAJO","razon_seguridad":"nivel post-correccion","explicacion1":"problemas encontrados","explicacion2":"correcciones aplicadas","explicacion3":"optimizaciones de gas","explicacion4":"como probar en Remix","codigo":"CONTRATO CORREGIDO con \\n"}\n\nCONTRATO:\n + codigo.substring(0, 7000); seguridad (ALTO/MEDIO/BAJO), razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo. El codigo debe ser un string con saltos de linea como \\n. Contrato: ' + codigo.substring(0, 7000);
+      prompt = 'Corrige este contrato Solidity. Responde SOLO con JSON valido con estas claves: seguridad (ALTO/MEDIO/BAJO), razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo. El codigo debe ser un string con saltos de linea como \\n. Contrato: ' + codigo.substring(0, 7000);
     } else {
-      prompt = Analiza este contrato Solidity con precision de auditoria CertiK.\n\nPASO 1 - IDENTIFICACION: Identifica el tipo de contrato y estandar.\nPASO 2 - SEGURIDAD: Busca reentrancy, overflow, access control, front-running, honeypot, mint ilimitado, blacklist, pausable sin timelock.\nPASO 3 - EVALUACION: Califica cada riesgo como CRITICO, ALTO, MEDIO o BAJO.\nPASO 4 - VEREDICTO: Score final y recomendaciones.\n\nResponde SOLO con este JSON:\n{"seguridad":"ALTO|MEDIO|BAJO","razon_seguridad":"una linea","explicacion1":"tipo de contrato","explicacion2":"vulnerabilidades encontradas","explicacion3":"riesgos de centralizacion","explicacion4":"recomendaciones concretas"}\n\nCONTRATO:\n + codigo.substring(0, 7000);
+      prompt = 'Analiza este contrato Solidity en espanol. Responde SOLO con JSON valido con estas claves: seguridad (ALTO/MEDIO/BAJO), razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4. Contrato: ' + codigo.substring(0, 7000);
     }
 
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 7000,
-      system: `Eres un Smart Contract Auditor Senior con +10 anos de experiencia en CertiK y PeckShield. Has auditado protocolos DeFi con miles de millones en TVL.
-
-REGLAS ABSOLUTAS:
-- Responde UNICAMENTE con JSON valido. Cero texto fuera del JSON.
-- Analiza SOLO el codigo proporcionado. NUNCA supongas funciones que no existen.
-- Si algo no es verificable escribe NO VERIFICABLE — NUNCA inventes datos.
-- Usa Solidity ^0.8.22 en codigo generado.
-- Se brutalmente honesto — este analisis protege dinero real de usuarios latinos.
-- Comentarios del codigo siempre en espanol.
-- NUNCA generes codigo con vulnerabilidades conocidas.
-- El campo codigo usa \\n para saltos de linea.`,
+      max_tokens: 4000,
+      system: 'Eres un auditor experto de smart contracts. Respondes UNICAMENTE con JSON valido sin markdown ni backticks. El campo codigo es un string donde los saltos de linea van como \\n.',
       messages: [{ role: 'user', content: prompt }]
     });
 
