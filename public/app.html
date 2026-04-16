@@ -991,7 +991,7 @@
   async function autenticar() {
     const email = document.getElementById('authEmail').value;
     const password = document.getElementById('authPassword').value;
-    const esRegistro = document.getElementById('tabRegistro').className.includes('active');
+    const esRegistro = document.getElementById('tabRegistro').classList.contains('active');
     const url = esRegistro ? '/registro' : '/login';
     const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) });
     const data = await r.json();
