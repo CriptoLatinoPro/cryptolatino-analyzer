@@ -167,7 +167,7 @@ app.post('/analizar-pago', async (req, res) => {
 
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
+      max_tokens: 7000,
       system: 'Eres un auditor experto de smart contracts. Respondes UNICAMENTE con JSON valido sin markdown ni backticks. El campo codigo es un string donde los saltos de linea van como \\n.',
       messages: [{ role: 'user', content: prompt }]
     });

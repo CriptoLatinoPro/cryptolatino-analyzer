@@ -3,279 +3,1023 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CryptoLatino - Analizador de Smart Contracts</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>CryptoLatino Pro — Analizador de Smart Contracts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #0a0a0a;
+      --dark: #111111;
+      --dark2: #181818;
+      --dark3: #222222;
+      --border: #2a2a2a;
+      --gold: #FFB800;
+      --gold2: #FFD060;
+      --gold3: rgba(255,184,0,0.10);
+      --white: #FFFFFF;
+      --muted: #666666;
+      --muted2: #444444;
+      --green: #22c55e;
+      --red: #ef4444;
+      --orange: #f97316;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Manrope', sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 300px;
+      background: radial-gradient(ellipse 80% 40% at 50% -10%, rgba(255,184,0,0.07) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* NAV */
+    nav {
+      position: relative;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,10,0.97);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: var(--gold);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--black);
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+
+    .logo-text span { color: var(--gold); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #btnLogout {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 7px 14px;
+      background: var(--red);
+      border: none;
+      border-radius: 7px;
+      color: white;
+      cursor: pointer;
+      display: none;
+    }
+
+    .btn-premium-nav {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 8px 16px;
+      background: var(--gold);
+      border: none;
+      border-radius: 8px;
+      color: var(--black);
+      cursor: pointer;
+    }
+
+    /* MODAL */
+    #modalAuth {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #modalAuth.visible {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--dark);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--gold);
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      margin: 16px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .modal-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 1px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .modal-tab {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .modal-tab.active {
+      background: var(--gold);
+      color: var(--black);
+    }
+
+    .modal-tab.inactive {
+      background: var(--dark2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .modal-input {
+      width: 100%;
+      background: var(--dark2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--white);
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .modal-input:focus { border-color: var(--gold); }
+    .modal-input::placeholder { color: var(--muted2); }
+
+    .btn-entrar {
+      width: 100%;
+      padding: 13px;
+      background: var(--gold);
+      border: none;
+      border-radius: 10px;
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-entrar:hover { background: var(--gold2); }
+
+    #authError {
+      color: var(--red);
+      font-size: 13px;
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+    }
+
+    #seccionPago {
+      display: none;
+      margin-top: 16px;
+    }
+
+    .pago-label {
+      text-align: center;
+      color: var(--gold);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .btn-pago {
+      width: 100%;
+      padding: 13px;
+      background: var(--green);
+      border: none;
+      border-radius: 10px;
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 17px;
+      letter-spacing: 1px;
+      cursor: pointer;
+    }
+
+    .pago-note {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    /* TABS MAIN */
+    .main-tabs {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--dark);
+      gap: 4px;
+    }
+
+    .main-tab {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 14px 20px;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      border: none;
+      background: none;
+      transition: all 0.2s;
+    }
+
+    .main-tab.active {
+      color: var(--gold);
+      border-bottom: 2px solid var(--gold);
+    }
+
+    /* LAYOUT */
+    .layout {
+      position: relative;
+      z-index: 5;
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      min-height: calc(100vh - 97px);
+    }
+
+    /* PANEL IZQUIERDO */
+    .panel-left {
+      padding: 24px;
+      border-right: 1px solid var(--border);
+    }
+
+    .field-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .contract-input {
+      flex: 1;
+      background: var(--dark2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--white);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .contract-input:focus {
+      border-color: var(--gold);
+    }
+
+    .contract-input::placeholder { color: var(--muted2); }
+
+    .chain-sel {
+      background: var(--dark2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 12px;
+      color: var(--gold);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+      min-width: 88px;
+    }
+
+    .btn-analyze {
+      width: 100%;
+      padding: 14px;
+      background: var(--gold);
+      border: none;
+      border-radius: 10px;
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: background 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-analyze:hover { background: var(--gold2); }
+    .btn-analyze:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* PREMIUM PANEL */
+    .premium-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .accion-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      background: var(--dark2);
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+
+    .accion-btn.active {
+      background: var(--gold);
+      color: var(--black);
+      border-color: var(--gold);
+    }
+
+    .code-textarea {
+      width: 100%;
+      background: var(--dark2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      color: var(--white);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      resize: vertical;
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    .code-textarea:focus { border-color: var(--gold); }
+    .code-textarea::placeholder { color: var(--muted2); }
+
+    .btn-premium {
+      width: 100%;
+      padding: 14px;
+      background: var(--gold);
+      border: none;
+      border-radius: 10px;
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-premium:hover { background: var(--gold2); }
+    .btn-premium:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* RESULTADO */
+    #resultado {
+      margin-top: 20px;
+    }
+
+    .result-card {
+      background: var(--dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: var(--dark2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .result-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 1px;
+      color: var(--gold);
+    }
+
+    .result-body { padding: 16px 18px; }
+
+    .result-section {
+      padding: 12px 14px;
+      background: var(--dark2);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border-left: 3px solid var(--gold);
+    }
+
+    .result-section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+
+    .result-section p {
+      font-size: 13px;
+      color: #999;
+      line-height: 1.6;
+    }
+
+    .seg-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+    }
+
+    .seg-alto { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+    .seg-medio { background: rgba(255,184,0,0.12); color: var(--gold); border: 1px solid rgba(255,184,0,0.3); }
+    .seg-bajo { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+
+    /* CÓDIGO */
+    .code-result-card {
+      background: var(--dark);
+      border: 1px solid rgba(255,184,0,0.25);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .code-result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: var(--dark2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .code-result-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 1px;
+      color: var(--gold);
+    }
+
+    .btn-copy {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 6px 14px;
+      background: var(--gold);
+      border: none;
+      border-radius: 6px;
+      color: var(--black);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #precodigo {
+      display: block;
+      padding: 16px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #6ec87a;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+      background: #050505;
+    }
+
+    .remix-note {
+      padding: 10px 18px;
+      font-size: 11px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    /* DISCLAIMER */
+    .disclaimer {
+      background: rgba(255,184,0,0.06);
+      border: 1px solid rgba(255,184,0,0.2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #888;
+      line-height: 1.6;
+    }
+
+    .disclaimer strong { color: var(--gold); }
+
+    /* PANEL DERECHO */
+    .panel-right {
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .r-card {
+      background: var(--dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .r-lbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .r-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      letter-spacing: 1px;
+      color: var(--gold);
+    }
+
+    .plan-card {
+      background: var(--dark);
+      border: 1.5px solid rgba(255,184,0,0.25);
+      border-radius: 14px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .plan-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .plan-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 2px;
+      color: var(--gold);
+      margin-bottom: 4px;
+    }
+
+    .plan-price {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .plan-price span {
+      font-family: 'Manrope', sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .plan-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 12px 0;
+    }
+
+    .feat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #888;
+      padding: 4px 0;
+    }
+
+    .feat-dot {
+      width: 5px; height: 5px;
+      background: var(--gold);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .btn-subscribe {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--gold);
+      border: none;
+      border-radius: 10px;
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 2px;
+      cursor: pointer;
+    }
+
+    /* TAB CONTENT */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ERROR */
+    .error-card {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 10px;
+      padding: 16px;
+      color: var(--red);
+      font-size: 13px;
+    }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .panel-right { border-top: 1px solid var(--border); }
+      nav { padding: 0 16px; }
+      .main-tabs { padding: 0 16px; overflow-x: auto; }
+      .panel-left { padding: 16px; }
+    }
+  </style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen p-6">
- 
-<div id="modalAuth" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
-  <div class="bg-slate-800 p-8 rounded-2xl w-full max-w-md">
-    <button onclick="document.getElementById('modalAuth').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 text-2xl font-bold">✕</button>
-    <h2 class="text-2xl font-bold mb-6 text-center">🔐 Acceder a CryptoLatino</h2>
-    <div class="flex gap-2 mb-6">
-      <button onclick="mostrarTab('login')" id="tabLogin" class="flex-1 bg-yellow-500 text-black py-2 rounded font-bold">Iniciar Sesión</button>
-      <button onclick="mostrarTab('registro')" id="tabRegistro" class="flex-1 bg-slate-600 py-2 rounded font-bold">Registrarse</button>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-icon">$</div>
+    <div class="logo-text">Crypto<span>Latino</span> Pro</div>
+  </div>
+  <div class="nav-right">
+    <button id="btnLogout" onclick="logout()">Cerrar Sesión</button>
+    <button class="btn-premium-nav" onclick="mostrarModal()">⚡ Premium $25</button>
+  </div>
+</nav>
+
+<!-- MODAL AUTH -->
+<div id="modalAuth">
+  <div class="modal-box">
+    <button class="modal-close" onclick="cerrarModal()">✕</button>
+    <div class="modal-title">🔐 Acceder a CryptoLatino</div>
+    <div class="modal-tabs">
+      <button onclick="mostrarTab('login')" id="tabLogin" class="modal-tab active">Iniciar Sesión</button>
+      <button onclick="mostrarTab('registro')" id="tabRegistro" class="modal-tab inactive">Registrarse</button>
     </div>
-    <input id="authEmail" type="email" placeholder="Email" class="w-full bg-slate-700 p-3 rounded mb-3 text-white">
-    <input id="authPassword" type="password" placeholder="Contraseña" class="w-full bg-slate-700 p-3 rounded mb-4 text-white">
-    <button onclick="autenticar()" class="w-full bg-yellow-500 text-black py-3 rounded font-bold text-lg">Entrar</button>
-    <p id="authError" class="text-red-400 mt-3 text-center hidden"></p>
-    <div id="seccionPago" class="hidden mt-4">
-      <p class="text-center mb-3 text-yellow-400">¿Listo para el plan Premium?</p>
-      <button onclick="irAPagar()" class="w-full bg-green-500 text-black py-3 rounded font-bold">💳 Suscribirse $25/mes</button>
-      <p class="text-xs text-center mt-2 text-slate-400">No solo generates tu contrato — tienes 1 mes para corregirlo, mejorarlo y perfeccionarlo hasta que funcione en Remix.</p>
+    <input id="authEmail" type="email" placeholder="Email" class="modal-input">
+    <input id="authPassword" type="password" placeholder="Contraseña" class="modal-input">
+    <button onclick="autenticar()" class="btn-entrar">Entrar</button>
+    <p id="authError"></p>
+    <div id="seccionPago">
+      <p class="pago-label">¿Listo para el plan Premium?</p>
+      <button onclick="irAPagar()" class="btn-pago">💳 Suscribirse $25/mes</button>
+      <p class="pago-note">No solo generas tu contrato — tienes 1 mes para corregirlo, mejorarlo y perfeccionarlo hasta que funcione en Remix.</p>
     </div>
   </div>
 </div>
 
-  <div class="max-w-2xl mx-auto">
-    <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold">🔐 Analizador de Smart Contracts</h1>
-      <button id="btnLogout" onclick="logout()" class="hidden absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded text-sm">Cerrar Sesión</button>
-    <p class="text-yellow-400 mt-2">Con Inteligencia Artificial — en Español</p>
-    </div>
+<!-- TABS PRINCIPALES -->
+<div class="main-tabs">
+  <button onclick="openTab(0)" id="tab0" class="main-tab active">Gratuito</button>
+  <button onclick="mostrarModal()" id="tab1" class="main-tab">Premium 💎</button>
+</div>
 
-    <!-- TABS -->
-    <div class="flex gap-4 mb-6">
-      <button onclick="openTab(0)" id="tab0" class="tab px-4 py-2 rounded-lg bg-yellow-500 text-black font-bold">Gratuito</button>
-      <button onclick="mostrarModal()" id="tab1" class="tab px-4 py-2 rounded-lg bg-slate-700 text-white font-bold">Premium 💎</button>
-    </div>
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- IZQUIERDA -->
+  <div class="panel-left">
 
     <!-- TAB GRATIS -->
-    <div id="content0" class="tab-content">
-      <div class="bg-slate-900 p-6 rounded-2xl">
-        <h2 class="text-xl font-bold mb-4">📍 Analizar contrato por dirección</h2>
-        <label class="block text-sm mb-1">Dirección del contrato</label>
-        <input id="direccion" type="text" placeholder="0x..." class="w-full bg-slate-800 rounded-xl p-3 mb-4 text-white outline-none">
-        <label class="block text-sm mb-1">Red</label>
-        <select id="red" class="w-full bg-slate-800 rounded-xl p-3 mb-6 text-white">
-          <option value="eth">Ethereum</option>
+    <div id="content0" class="tab-content active">
+      <div class="field-label">Dirección del Contrato</div>
+      <div class="input-row">
+        <input id="direccion" type="text" placeholder="0x..." class="contract-input">
+        <select id="red" class="chain-sel">
+          <option value="eth">ETH</option>
+          <option value="arb">ARB</option>
+          <option value="pol">POL</option>
           <option value="bsc">BSC</option>
-          <option value="arb">Arbitrum</option>
-          <option value="pol">Polygon</option>
         </select>
-        <button id="btnGratis" onclick="analizarGratis()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl text-lg">
-          🔍 ANALIZAR CON IA
-        </button>
       </div>
+      <button id="btnGratis" onclick="analizarGratis()" class="btn-analyze">
+        🔍 ANALIZAR CONTRATO
+      </button>
     </div>
 
     <!-- TAB PREMIUM -->
-    <div id="content1" class="tab-content hidden">
-      <div class="bg-slate-900 p-6 rounded-2xl">
-        <h2 class="text-xl font-bold mb-4">💎 Análisis Premium</h2>
-        <div class="flex gap-2 mb-4">
-          <button onclick="setAccion('analizar')" id="btnAnalizar" class="accion-btn flex-1 py-2 rounded-lg bg-blue-600 font-bold">Analizar</button>
-          <button onclick="setAccion('corregir')" id="btnCorregir" class="accion-btn flex-1 py-2 rounded-lg bg-slate-700 font-bold">Corregir</button>
-          <button onclick="setAccion('generar')" id="btnGenerar" class="accion-btn flex-1 py-2 rounded-lg bg-slate-700 font-bold">Generar</button>
-        </div>
-        <div id="inputCodigo">
-          <label class="block text-sm mb-1">Código Solidity</label>
-          <textarea id="codigo" rows="8" placeholder="Pega tu código Solidity aquí..." class="w-full bg-slate-800 rounded-xl p-3 mb-4 text-white outline-none font-mono text-sm"></textarea>
-        </div>
-        <div id="inputDescripcion" class="hidden">
-          <label class="block text-sm mb-1">Describe el contrato que quieres generar</label>
-          <textarea id="descripcion" rows="4" placeholder="Ej: Token ERC20 con supply de 1 millón, burn y pausable..." class="w-full bg-slate-800 rounded-xl p-3 mb-4 text-white outline-none"></textarea>
-        </div>
-        <button id="btnPremium" onclick="analizarPremium()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl text-lg">
-          ⚡ ANALIZAR PREMIUM
-        </button>
+    <div id="content1" class="tab-content">
+      <div class="premium-actions">
+        <button onclick="setAccion('analizar')" id="btnAnalizar" class="accion-btn active">Analizar</button>
+        <button onclick="setAccion('corregir')" id="btnCorregir" class="accion-btn">Corregir</button>
+        <button onclick="setAccion('generar')" id="btnGenerar" class="accion-btn">Generar</button>
       </div>
+      <div id="inputCodigo">
+        <div class="field-label">Código Solidity</div>
+        <textarea id="codigo" rows="10" placeholder="Pega tu código Solidity aquí..." class="code-textarea"></textarea>
+      </div>
+      <div id="inputDescripcion" style="display:none;">
+        <div class="field-label">Describe el contrato</div>
+        <textarea id="descripcion" rows="5" placeholder="Ej: Token ERC20 con supply de 1 millón, burn y pausable..." class="code-textarea"></textarea>
+      </div>
+      <button id="btnPremium" onclick="analizarPremium()" class="btn-premium">
+        ⚡ ANALIZAR PREMIUM
+      </button>
     </div>
 
     <!-- RESULTADO -->
-    <div id="resultado" class="hidden mt-6 space-y-4"></div>
+    <div id="resultado"></div>
+
   </div>
 
-  <script>
-    let accionActual = "analizar";
-    const tokenGuardado = localStorage.getItem("token");
-    const planGuardado = localStorage.getItem("plan");
-    if (window.location.hash === "#login") mostrarModal();
-    if (tokenGuardado) {
-      document.getElementById("btnLogout").classList.remove("hidden");
-      if (planGuardado === "premium") openTab(1);
+  <!-- DERECHA -->
+  <div class="panel-right">
+
+    <div class="r-card">
+      <div class="r-lbl">Herramienta</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--white);">Smart Contract Analyzer</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">Powered by Claude AI · En Español</div>
+    </div>
+
+    <div class="plan-card">
+      <div class="plan-name">PREMIUM</div>
+      <div class="plan-price">$25 <span>/mes USD</span></div>
+      <div class="plan-divider"></div>
+      <div class="feat"><div class="feat-dot"></div>29 análisis por mes</div>
+      <div class="feat"><div class="feat-dot"></div>Análisis IA estilo CertiK</div>
+      <div class="feat"><div class="feat-dot"></div>Generación de contratos</div>
+      <div class="feat"><div class="feat-dot"></div>Corrección con IA</div>
+      <div class="feat"><div class="feat-dot"></div>Código Solidity visible</div>
+      <div class="feat"><div class="feat-dot"></div>Soporte en español</div>
+      <button class="btn-subscribe" onclick="mostrarModal()">SUSCRIBIRSE AHORA</button>
+    </div>
+
+    <div class="r-card">
+      <div class="r-lbl">Redes Soportadas</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;color:#a5b4fc;">ETH</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;color:#67e8f9;">ARB</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;color:#d8b4fe;">POL</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border:1px solid var(--border);border-radius:5px;color:#fde68a;">BSC</span>
+      </div>
+    </div>
+
+    <div class="r-card" style="border-color:rgba(255,184,0,0.15);">
+      <div class="r-lbl">Aviso</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.6;">Los análisis son generados por IA y son un punto de partida profesional. Siempre prueba en testnet antes de mainnet.</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let accionActual = "analizar";
+  const tokenGuardado = localStorage.getItem("token");
+  const planGuardado = localStorage.getItem("plan");
+
+  if (window.location.hash === "#login") mostrarModal();
+
+  if (tokenGuardado) {
+    document.getElementById("btnLogout").style.display = "block";
+    if (planGuardado === "premium") openTab(1);
+  }
+
+  function cerrarModal() {
+    document.getElementById('modalAuth').classList.remove('visible');
+  }
+
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("plan");
+    document.getElementById("btnLogout").style.display = "none";
+    location.reload();
+  }
+
+  function openTab(n) {
+    document.querySelectorAll('.tab-content').forEach((c, i) => {
+      c.classList.toggle('active', i === n);
+    });
+    document.querySelectorAll('.main-tab').forEach((t, i) => {
+      t.classList.toggle('active', i === n);
+    });
+  }
+
+  function setAccion(a) {
+    accionActual = a;
+    document.querySelectorAll('.accion-btn').forEach(b => b.classList.remove('active'));
+    const map = { analizar: 'btnAnalizar', corregir: 'btnCorregir', generar: 'btnGenerar' };
+    document.getElementById(map[a]).classList.add('active');
+    document.getElementById('inputCodigo').style.display = a === 'generar' ? 'none' : 'block';
+    document.getElementById('inputDescripcion').style.display = a === 'generar' ? 'block' : 'none';
+  }
+
+  function copiarCodigo(btn) {
+    const codigo = document.getElementById('precodigo').textContent;
+    navigator.clipboard.writeText(codigo).then(() => {
+      btn.textContent = '✅ Copiado!';
+      setTimeout(() => { btn.textContent = '📋 Copiar Código'; }, 2000);
+    });
+  }
+
+  function mostrarResultado(data) {
+    const div = document.getElementById('resultado');
+    div.innerHTML = '';
+
+    if (data.error) {
+      div.innerHTML = '<div class="error-card">❌ Error: ' + data.error + '</div>';
+      return;
     }
 
-    function logout() {
-      localStorage.removeItem("token");
-      localStorage.removeItem("plan");
-      document.getElementById("btnLogout").classList.add("hidden");
-      location.reload();
-    }
+    const a = data.analisis || {};
 
-    function openTab(n) {
-      document.querySelectorAll('.tab-content').forEach((c, i) => {
-        c.classList.toggle('hidden', i !== n);
-      });
-      document.querySelectorAll('.tab').forEach((t, i) => {
-        t.className = i === n
-          ? 'tab px-4 py-2 rounded-lg bg-yellow-500 text-black font-bold'
-          : 'tab px-4 py-2 rounded-lg bg-slate-700 text-white font-bold';
-      });
-    }
-
-    function setAccion(a) {
-      accionActual = a;
-      document.querySelectorAll('.accion-btn').forEach(b => b.classList.replace('bg-blue-600', 'bg-slate-700'));
-      const map = { analizar: 'btnAnalizar', corregir: 'btnCorregir', generar: 'btnGenerar' };
-      document.getElementById(map[a]).classList.replace('bg-slate-700', 'bg-blue-600');
-      document.getElementById('inputCodigo').classList.toggle('hidden', a === 'generar');
-      document.getElementById('inputDescripcion').classList.toggle('hidden', a !== 'generar');
-    }
-
-    function copiarCodigo(btn) {
-  const codigo = document.getElementById('precodigo').textContent;
-  navigator.clipboard.writeText(codigo).then(() => {
-    btn.textContent = '✅ Copiado!';
-    setTimeout(() => { btn.textContent = '📋 Copiar Código'; }, 2000);
-  });
-}
-
-    function mostrarResultado(data) {
-      const div = document.getElementById('resultado');
-      div.classList.remove('hidden');
-      div.innerHTML = '';
-
-      if (data.error) {
-        div.innerHTML = '<div class="bg-slate-900 p-6 rounded-2xl"><p class="text-red-400 font-bold">Error: ' + data.error + '</p></div>';
-        return;
-      }
-
-      const a = data.analisis || {};
-      const color = a.seguridad === 'ALTO' ? 'green' : a.seguridad === 'MEDIO' ? 'yellow' : 'red';
-
-      // SECCION 1 — Analisis
-      let analisisHTML = '<div class="bg-slate-900 p-6 rounded-2xl">';
-      analisisHTML += '<h3 class="text-xl font-bold mb-4">📊 Resultado del Análisis</h3>';
-
-      if (a.seguridad) {
-        analisisHTML += '<div class="bg-slate-800 p-4 rounded-xl mb-4"><span class="font-bold text-' + color + '-400 text-lg">🔒 Seguridad: ' + a.seguridad + '</span><p class="mt-2 text-slate-300">' + (a.razon_seguridad || '') + '</p></div>';
-      }
-      if (a.explicacion1) {
-        analisisHTML += '<div class="bg-slate-800 p-4 rounded-xl mb-3"><p class="font-bold text-yellow-400 mb-1">📌 Qué hace:</p><p class="text-slate-300">' + a.explicacion1 + '</p></div>';
-      }
-      if (a.explicacion2) {
-        analisisHTML += '<div class="bg-slate-800 p-4 rounded-xl mb-3"><p class="font-bold text-yellow-400 mb-1">⚙️ Funciones:</p><p class="text-slate-300">' + a.explicacion2 + '</p></div>';
-      }
-      if (a.explicacion3) {
-        analisisHTML += '<div class="bg-slate-800 p-4 rounded-xl mb-3"><p class="font-bold text-yellow-400 mb-1">⚠️ Riesgos:</p><p class="text-slate-300">' + a.explicacion3 + '</p></div>';
-      }
-      if (a.explicacion4) {
-        analisisHTML += '<div class="bg-slate-800 p-4 rounded-xl mb-3"><p class="font-bold text-yellow-400 mb-1">✅ Recomendaciones:</p><p class="text-slate-300">' + a.explicacion4 + '</p></div>';
-      }
-
-      analisisHTML += '</div>';
-      div.innerHTML += analisisHTML;
-
-      // SECCION 2 — Codigo Solidity separado
-      if (a.codigo) {
-        const codigoLimpio = a.codigo.replace(/`/g, '');
-       const codigoHTML = '<div class="bg-slate-900 p-6 rounded-2xl border border-purple-500">' +
-  '<div class="flex items-center justify-between mb-4">' +
-  '<h3 class="text-xl font-bold text-purple-400">📄 Contrato Solidity</h3>' +
-  '<button id="btnCopiar" onclick="copiarCodigo(this)" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm">📋 Copiar Código</button>' +
-  '</div>' +
-  '<pre id="precodigo" style="white-space: pre-wrap; word-break: break-word;"class="bg-slate-800 p-4 rounded-xl text-sm overflow-x-auto text-green-300 font-mono leading-relaxed">' + codigoLimpio + '</pre>' +
-  '<p class="text-slate-400 text-xs mt-3">💡 Copia este código y pégalo en <strong>remix.ethereum.org</strong></p>' +
-  '</div>';
-        div.innerHTML += codigoHTML;
-      }
-
-      // Aviso legal
-      if (data.analisis) {
-        div.innerHTML += '<div class="bg-yellow-900 border border-yellow-500 p-4 rounded-xl text-sm"><strong>⚠️ Aviso Legal:</strong> Este análisis fue generado con IA. Te recomendamos compilarlo en Remix IDE y probarlo en testnet antes de usarlo en mainnet. Tú tienes el control final.</div>';
-      }
-
+    // Si es resultado gratis
+    if (!data.analisis) {
+      div.innerHTML = '<div class="result-card"><div class="result-header"><span class="result-title">' + (data.nombre || 'Contrato') + '</span></div><div class="result-body"><div class="result-section"><div class="result-section-label">ESTADO</div><p>' + (data.mensaje || '') + '</p></div><div class="result-section"><div class="result-section-label">COMPILADOR</div><p>' + (data.compilador || 'N/A') + '</p></div><div class="result-section"><div class="result-section-label">VERIFICADO</div><p>' + (data.verificado ? '✓ Sí' : '✗ No') + '</p></div></div></div>';
       div.scrollIntoView({ behavior: "smooth" });
+      return;
     }
 
-    async function analizarGratis() {
-      const direccion = document.getElementById('direccion').value.trim();
-      const btn = document.getElementById('btnGratis');
-      if (!direccion) return alert('Ingresa una direccion del contrato');
-      if (!direccion.startsWith('0x')) return alert('La direccion debe empezar con 0x');
-      btn.disabled = true;
-      btn.textContent = 'Analizando...';
-      document.getElementById('resultado').classList.add('hidden');
-      try {
-        const r = await fetch('/analizar-gratis', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address: direccion, network: document.getElementById('red').value })
-        });
-        const data = await r.json();
-        mostrarResultado(data);
-      } catch(e) {
-        mostrarResultado({ error: e.message });
-      }
-      btn.disabled = false;
-      btn.textContent = '🔍 ANALIZAR CON IA';
+    const segClass = a.seguridad === 'ALTO' ? 'seg-alto' : a.seguridad === 'MEDIO' ? 'seg-medio' : 'seg-bajo';
+
+    let html = '<div class="result-card">';
+    html += '<div class="result-header"><span class="result-title">📊 Resultado del Análisis</span>';
+    if (a.seguridad) html += '<span class="seg-badge ' + segClass + '">' + a.seguridad + '</span>';
+    html += '</div><div class="result-body">';
+
+    if (a.razon_seguridad) {
+      html += '<div class="result-section"><div class="result-section-label">SEGURIDAD</div><p>' + a.razon_seguridad + '</p></div>';
+    }
+    if (a.explicacion1) {
+      html += '<div class="result-section"><div class="result-section-label">QUÉ HACE</div><p>' + a.explicacion1 + '</p></div>';
+    }
+    if (a.explicacion2) {
+      html += '<div class="result-section"><div class="result-section-label">VULNERABILIDADES</div><p>' + a.explicacion2 + '</p></div>';
+    }
+    if (a.explicacion3) {
+      html += '<div class="result-section"><div class="result-section-label">RIESGOS</div><p>' + a.explicacion3 + '</p></div>';
+    }
+    if (a.explicacion4) {
+      html += '<div class="result-section"><div class="result-section-label">RECOMENDACIONES</div><p>' + a.explicacion4 + '</p></div>';
     }
 
-    async function analizarPremium() {
-      const btn = document.getElementById('btnPremium');
-      const codigo = document.getElementById('codigo').value.trim();
-      const descripcion = document.getElementById('descripcion').value.trim();
-      btn.disabled = true;
-      btn.textContent = 'Analizando...';
-      document.getElementById('resultado').classList.add('hidden');
-      try {
-        const r = await fetch('/analizar-pago', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
-          body: JSON.stringify({ codigo, accion: accionActual, descripcion })
-        });
-        const data = await r.json();
-        mostrarResultado(data);
-      } catch(e) {
-        mostrarResultado({ error: e.message });
-      }
-      btn.disabled = false;
-      btn.textContent = '⚡ ANALIZAR PREMIUM';
+    html += '</div></div>';
+    div.innerHTML += html;
+
+    if (a.codigo) {
+      const codigoLimpio = a.codigo.replace(/`/g, '');
+      div.innerHTML += '<div class="code-result-card"><div class="code-result-header"><span class="code-result-title">📄 Contrato Solidity</span><button id="btnCopiar" onclick="copiarCodigo(this)" class="btn-copy">📋 Copiar Código</button></div><pre id="precodigo">' + codigoLimpio + '</pre><div class="remix-note">💡 Copia este código y pégalo en <strong>remix.ethereum.org</strong></div></div>';
     }
 
-    function mostrarModal() {
-      document.getElementById('modalAuth').classList.remove('hidden');
-    }
+    div.innerHTML += '<div class="disclaimer"><strong>⚠️ Aviso Legal:</strong> Este análisis fue generado con IA y es un punto de partida profesional. Te recomendamos compilarlo en Remix IDE y probarlo en testnet antes de usarlo en mainnet. Tú tienes el control final.</div>';
 
-    function mostrarTab(tab) {
-      document.getElementById('tabLogin').className = tab === 'login' ? 'flex-1 bg-yellow-500 text-black py-2 rounded font-bold' : 'flex-1 bg-slate-600 py-2 rounded font-bold';
-      document.getElementById('tabRegistro').className = tab === 'registro' ? 'flex-1 bg-yellow-500 text-black py-2 rounded font-bold' : 'flex-1 bg-slate-600 py-2 rounded font-bold';
-    }
+    div.scrollIntoView({ behavior: "smooth" });
+  }
 
-    async function autenticar() {
-      const email = document.getElementById('authEmail').value;
-      const password = document.getElementById('authPassword').value;
-      const esRegistro = document.getElementById('tabRegistro').className.includes('yellow');
-      const url = esRegistro ? '/registro' : '/login';
-      const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) });
+  async function analizarGratis() {
+    const direccion = document.getElementById('direccion').value.trim();
+    const btn = document.getElementById('btnGratis');
+    if (!direccion) return alert('Ingresa una direccion del contrato');
+    if (!direccion.startsWith('0x')) return alert('La direccion debe empezar con 0x');
+    btn.disabled = true;
+    btn.textContent = 'Analizando...';
+    document.getElementById('resultado').innerHTML = '';
+    try {
+      const r = await fetch('/analizar-gratis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: direccion, network: document.getElementById('red').value })
+      });
       const data = await r.json();
-      
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('plan', data.plan);
-        document.getElementById("modalAuth").classList.add("hidden");
-        document.getElementById("btnLogout").classList.remove("hidden");
-        if (data.plan === 'premium') {
-          openTab(1);
-        } else {
-          document.getElementById('seccionPago').classList.remove('hidden');
-        }
-      } else if (data.ok) {
-        document.getElementById('seccionPago').classList.remove('hidden');
+      mostrarResultado(data);
+    } catch(e) {
+      mostrarResultado({ error: e.message });
+    }
+    btn.disabled = false;
+    btn.textContent = '🔍 ANALIZAR CONTRATO';
+  }
+
+  async function analizarPremium() {
+    const btn = document.getElementById('btnPremium');
+    const codigo = document.getElementById('codigo').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+    btn.disabled = true;
+    btn.textContent = 'Analizando...';
+    document.getElementById('resultado').innerHTML = '';
+    try {
+      const r = await fetch('/analizar-pago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+        body: JSON.stringify({ codigo, accion: accionActual, descripcion })
+      });
+      const data = await r.json();
+      mostrarResultado(data);
+    } catch(e) {
+      mostrarResultado({ error: e.message });
+    }
+    btn.disabled = false;
+    btn.textContent = '⚡ ANALIZAR PREMIUM';
+  }
+
+  function mostrarModal() {
+    document.getElementById('modalAuth').classList.add('visible');
+  }
+
+  function mostrarTab(tab) {
+    document.getElementById('tabLogin').className = tab === 'login' ? 'modal-tab active' : 'modal-tab inactive';
+    document.getElementById('tabRegistro').className = tab === 'registro' ? 'modal-tab active' : 'modal-tab inactive';
+  }
+
+  async function autenticar() {
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    const esRegistro = document.getElementById('tabRegistro').className.includes('active');
+    const url = esRegistro ? '/registro' : '/login';
+    const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) });
+    const data = await r.json();
+
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('plan', data.plan);
+      cerrarModal();
+      document.getElementById("btnLogout").style.display = "block";
+      if (data.plan === 'premium') {
+        openTab(1);
       } else {
-        const err = document.getElementById('authError');
-        err.textContent = data.error;
-        err.classList.remove('hidden');
+        document.getElementById('seccionPago').style.display = 'block';
       }
+    } else if (data.ok) {
+      document.getElementById('seccionPago').style.display = 'block';
+    } else {
+      const err = document.getElementById('authError');
+      err.textContent = data.error;
+      err.style.display = 'block';
     }
+  }
 
-    async function irAPagar() {
-      const r = await fetch('/crear-pago', { method: 'POST', headers: {'Content-Type':'application/json'} });
-      const data = await r.json();
-      if (data.url) window.location.href = data.url;
-    }
-  </script>
+  async function irAPagar() {
+    const r = await fetch('/crear-pago', { method: 'POST', headers: {'Content-Type':'application/json'} });
+    const data = await r.json();
+    if (data.url) window.location.href = data.url;
+  }
+</script>
 </body>
 </html>
