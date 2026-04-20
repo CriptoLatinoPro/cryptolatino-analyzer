@@ -158,17 +158,17 @@ app.post('/analizar-pago', async (req, res) => {
 
     let prompt = '';
     if (accion === 'generar') {
-      prompt = 'PASO 1: Analiza la descripcion e identifica tipo de contrato (ERC-20, ERC-721, staking, escrow, DAO u otro). PASO 2: Genera contrato completo con Solidity >=0.8.0, SPDX license, OpenZeppelin si aplica, modificadores de acceso correctos, eventos en funciones de estado, require() en todos los inputs. PASO 3: Revisa buscando reentrancy, acceso sin control, inputs sin validar y corrige antes de responder. PASO 4: Responde UNICAMENTE JSON: {seguridad, razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo}. Descripcion: ' + descripcion + '.';
+      prompt = 'Genera un smart contract Solidity completo basado en: ' + descripcion + '. Responde SOLO con JSON valido con estas claves: seguridad (ALTO/MEDIO/BAJO), razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo. El codigo debe ser un string con saltos de linea como \\n.';
     } else if (accion === 'corregir') {
-      prompt = 'PASO 1: Diagnostica el contrato e identifica problemas de seguridad y logica. PASO 2: Corrige cada problema manteniendo la funcionalidad original. PASO 3: Usa Solidity >=0.8.0, OpenZeppelin si aplica, eventos y require() en inputs. PASO 4: Responde UNICAMENTE JSON: {"seguridad":"ALTO|MEDIO|BAJO","razon_seguridad":"...","explicacion1":"Problemas encontrados","explicacion2":"Cambios realizados","explicacion3":"Mejoras adicionales","explicacion4":"Instrucciones de uso","codigo":"CODIGO CON \\n"}. Contrato: ' + codigo.substring(0, 7000);
+      prompt = 'Corrige este contrato Solidity. Responde SOLO con JSON valido con estas claves: seguridad (ALTO/MEDIO/BAJO), razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4, codigo. El codigo debe ser un string con saltos de linea como \\n. Contrato: ' + codigo.substring(0, 7000);
     } else {
-    prompt = 'PASO 1: Identifica tipo de contrato (ERC-20, ERC-721, DeFi, DAO u otro) y librerias usadas. PASO 2: Busca vulnerabilidades criticas: reentrancy, overflow, acceso sin control, tx.origin, delegatecall inseguro. PASO 3: Busca riesgos medios: eventos faltantes, inputs sin validar, magic numbers. PASO 4: Asigna ALTO sin criticos, MEDIO con riesgos menores, BAJO con vulnerabilidad critica. Responde UNICAMENTE JSON: {seguridad, razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4}. Contrato: ' + codigo.substring(0, 7000);
+      prompt = 'Analiza este contrato Solidity en espanol. Responde SOLO con JSON valido con estas claves: seguridad (ALTO/MEDIO/BAJO), razon_seguridad, explicacion1, explicacion2, explicacion3, explicacion4. Contrato: ' + codigo.substring(0, 7000);
     }
 
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 7000,
-      system: 'Eres un Smart Contract Auditor Senior especializado en seguridad blockchain, equivalente a CertiK y PeckShield. Analizas contratos Solidity para Latinoamerica en espanol profesional. REGLAS: 1) Solo JSON valido, sin markdown ni backticks. 2) Campo codigo usa \\n para saltos. 3) Analiza SOLO el codigo dado, nunca inventes. 4) Si no puedes determinarlo escribe: No se puede determinar. 5) Sin garantias legales ni financieras.',
+      system: 'Eres un auditor experto de smart contracts. Respondes UNICAMENTE con JSON valido sin markdown ni backticks. El campo codigo es un string donde los saltos de linea van como \\n.',
       messages: [{ role: 'user', content: prompt }]
     });
 
